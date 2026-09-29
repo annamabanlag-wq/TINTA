@@ -1,7 +1,8 @@
 import { Redirect } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { useSession } from "../src/session";
 import { colors } from "../src/theme";
+import { InkLoader } from "../src/motion";
 
 const APP_ROLE = process.env.EXPO_PUBLIC_APP_ROLE ?? "customer";
 
@@ -22,7 +23,7 @@ function AppEntry() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={colors.brand} size="large" />
+        <InkLoader label="TINTA" />
       </View>
     );
   }
@@ -35,8 +36,5 @@ function AppEntry() {
 }
 
 export default function Index() {
-  // IMPORTANT: the public Artist domain must not initialize the normal
-  // customer/admin session before routing. That session check was the source
-  // of the indefinite loading screen on the dedicated artist URL.
   return isArtistDeployment() ? <ArtistEntry /> : <AppEntry />;
 }

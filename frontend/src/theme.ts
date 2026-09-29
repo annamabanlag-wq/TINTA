@@ -28,6 +28,8 @@ export const colors = {
   borderStrong: "#FFFFFF",
   divider: "#262626",
   muted: "#808080",
+  gold: "#C9A227",
+  goldSoft: "rgba(201,162,39,0.16)",
 };
 
 export const spacing = {
@@ -41,10 +43,10 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  sm: 0,
-  md: 0,
-  lg: 0,
-  pill: 0,
+  sm: 2,
+  md: 4,
+  lg: 8,
+  pill: 999,
 } as const;
 
 export const typography = {
