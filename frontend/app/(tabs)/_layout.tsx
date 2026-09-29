@@ -18,15 +18,15 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 2,
-          borderTopColor: colors.borderStrong,
-          ...(Platform.OS === "web" ? { height: 64 } : {}),
+          backgroundColor: "#0B0B0B",
+          borderTopWidth: 1,
+          borderTopColor: "rgba(201,162,39,0.28)",
+          ...(Platform.OS === "web" ? { height: 68 } : {}),
         },
         tabBarItemStyle: { alignSelf: "center" },
-        tabBarActiveTintColor: colors.brand,
+        tabBarActiveTintColor: colors.gold,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "800", letterSpacing: 1.6 },
         sceneStyle: { backgroundColor: colors.surface },
       }}
     >
