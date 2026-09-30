@@ -15,6 +15,23 @@ from fastapi.dependencies.utils import get_dependant
 import uuid
 
 
+def _payload_from_request(request: Request):
+    cached = getattr(request.state, "tinta_payload", None)
+    if isinstance(cached, dict):
+        return cached
+    return None
+
+
+def _normalize_email(raw_email: str) -> str:
+    try:
+        return validate_email(raw_email, check_deliverability=True).normalized
+    except EmailNotValidError:
+        try:
+            return validate_email(raw_email, check_deliverability=False).normalized
+        except EmailNotValidError:
+            raise
+
+
 def install(module):
     for route in list(module.app.routes):
         if not isinstance(route, APIRoute):
@@ -27,43 +44,50 @@ def install(module):
         original_register = route.endpoint
 
         async def artist_aware_register(request: Request):
-            try:
-                payload = await request.json()
-            except Exception:
-                payload = {}
+            payload = _payload_from_request(request)
+            if payload is None:
+                try:
+                    payload = await request.json()
+                except Exception:
+                    payload = {}
+                request.state.tinta_payload = payload
 
             role = str(payload.get("role", "customer")).strip().lower()
             if role not in {"customer", "artist"}:
                 role = "customer"
 
-            body = module.RegisterIn(
-                email=payload.get("email", ""),
-                password=payload.get("password", ""),
-                name=payload.get("name", ""),
-            )
+            try:
+                body = module.RegisterIn(
+                    email=payload.get("email", ""),
+                    password=payload.get("password", ""),
+                    name=payload.get("name", ""),
+                )
+            except Exception as exc:
+                raise module.HTTPException(422, str(getattr(exc, "errors", lambda: exc)() if hasattr(exc, "errors") else exc))
 
             if role != "artist":
                 return await original_register(body)
 
-            # Artist onboarding is admin-verified, not mailbox-verified, while
-            # the platform has no verified outbound email domain. We still
-            # require a syntactically valid, deliverable email domain so an
-            # obviously fake/nonexistent email address cannot register.
             try:
-                validated = validate_email(body.email, check_deliverability=True)
-                email = validated.normalized
+                email = _normalize_email(body.email)
             except EmailNotValidError:
                 raise module.HTTPException(422, "Please enter a real, reachable email address.")
+
+            if not body.name or not str(body.name).strip():
+                raise module.HTTPException(422, "Please enter your artist name.")
+            if not body.password or len(str(body.password)) < 6:
+                raise module.HTTPException(422, "Password must be at least 6 characters.")
 
             existing = await module.db.users.find_one({"email": email})
             if existing:
                 raise module.HTTPException(409, "Email already registered")
 
             uid = str(uuid.uuid4())
+            name = body.name.strip()
             doc = {
                 "id": uid,
                 "email": email,
-                "name": body.name.strip(),
+                "name": name,
                 "password_hash": module.hash_password(body.password),
                 "is_admin": False,
                 "role": "artist",
@@ -73,24 +97,18 @@ def install(module):
                 "created_at": module.now_iso(),
             }
             await module.db.users.insert_one(doc)
-            module.logger.info("TINTA SIGNUP role=artist user_id=%s email=%s name=%s", uid, email, body.name.strip())
+            module.logger.info("TINTA SIGNUP role=artist user_id=%s email=%s name=%s", uid, email, name)
 
-            # Create an independent server session exactly like normal login.
             from auth_session_patch import _new_session
             _sid, token = await _new_session(module, uid)
 
-            # Do not return the legacy PublicUser model here: it intentionally
-            # contains no role fields, so FastAPI would strip the artist flags
-            # and the Artist portal would misclassify a brand-new artist as a
-            # customer. Keep the existing AuthOut shape and add the identity
-            # flags required by the Artist portal.
             return {
                 "access_token": token,
                 "token_type": "bearer",
                 "user": {
                     "id": uid,
                     "email": email,
-                    "name": body.name.strip(),
+                    "name": name,
                     "is_admin": False,
                     "role": "artist",
                     "artist_portal": True,
@@ -102,11 +120,6 @@ def install(module):
         artist_aware_register._tinta_artist_registration_role = True
         route.endpoint = artist_aware_register
         route.dependant = get_dependant(path=route.path_format, call=artist_aware_register)
-        # APIRoute caches the ASGI handler during initialization. Rebuild it
-        # after replacing the endpoint so the live Render process executes the
-        # artist-aware handler rather than the older email-verification wrapper.
-        # Disable the legacy AuthOut response model because it strips the
-        # artist-specific identity fields from the registration response.
         route.response_model = None
         route.response_field = None
         route.secure_cloned_response_field = None

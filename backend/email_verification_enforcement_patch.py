@@ -1,8 +1,8 @@
-"""Final mailbox-verification enforcement for all new TINTA accounts.
+"""Final mailbox-verification enforcement for new TINTA customer accounts.
 
-This is the single active email-verification layer. It runs last in the startup
-chain after the artist-role and auth-session patches. Sending is HTTPS-first so
-it works on Render free services where direct SMTP egress may be unavailable.
+Artist registration is admin-reviewed and must not be blocked by outbound email.
+This layer runs last in the startup chain. Sending is HTTPS-first so it works on
+Render free services where direct SMTP egress may be unavailable.
 """
 
 import json
@@ -109,8 +109,6 @@ def _relay_healthcheck() -> None:
     if not _relay_configured():
         return
     try:
-        # Safe probe: uses the configured token but deliberately invalid code/email,
-        # so a correctly configured relay will reject before attempting to send mail.
         response = requests.post(
             _relay_url(),
             headers={
@@ -208,8 +206,6 @@ def _send_code_resend(email: str, code: str) -> None:
 
 
 def _send_code(email: str, code: str) -> None:
-    # Try every configured sender so a stale/broken relay cannot block registration.
-    # The first successful sender wins; failures are retained for a useful final error.
     senders = []
     if _relay_configured():
         senders.append(("relay", _send_code_relay))
@@ -268,6 +264,18 @@ def _result_token(result):
     if isinstance(result, dict):
         return str(result.get("access_token") or "")
     return str(getattr(result, "access_token", "") or "")
+
+
+async def _read_payload(request: Request):
+    cached = getattr(request.state, "tinta_payload", None)
+    if isinstance(cached, dict):
+        return cached
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    request.state.tinta_payload = payload
+    return payload
 
 
 def install(module):
@@ -341,10 +349,15 @@ def install(module):
             break
 
         async def verified_register(request: Request):
+            payload = await _read_payload(request)
+            role = str(payload.get("role", "customer")).strip().lower()
+            # Artists are approved by TINTA admin, not by mailbox ownership.
+            if role == "artist":
+                return await original_register(request)
+
             if not _email_configured():
                 raise HTTPException(503, "Email verification is not configured yet. Please try again shortly.")
             try:
-                payload = await request.json()
                 validated = validate_email(str(payload.get("email", "")), check_deliverability=True)
             except EmailNotValidError:
                 raise HTTPException(422, "Please enter a real, reachable email address.")
@@ -405,6 +418,8 @@ def install(module):
         async def verified_login(body):
             result = await original_login(body)
             user = await db.users.find_one({"id": _result_user(result).get("id")}, {"_id": 0})
+            if user and user.get("role") == "artist":
+                return result
             if user and user.get("email_verified") is False:
                 raise HTTPException(403, "Please verify your email before signing in.")
             return result

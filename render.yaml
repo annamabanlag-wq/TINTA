@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: tinta-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: TINTA_REQUIRE_EMAIL_VERIFICATION
+        value: "false"
+      - key: PYTHONUNBUFFERED
+        value: "1"
