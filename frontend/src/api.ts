@@ -61,7 +61,16 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
 }
 
 // ------- Types -------
-export type User = { id: string; email: string; name: string; is_admin?: boolean };
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  is_admin?: boolean;
+  role?: "customer" | "artist" | string;
+  artist_portal?: boolean;
+  artist_identity_verified?: boolean;
+  email_verified?: boolean;
+};
 export type AuthOut = { access_token: string; token_type: string; user: User };
 export type Artist = {
   id: string;
