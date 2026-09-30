@@ -20,6 +20,8 @@ class _ServerLoader(importlib.abc.Loader):
             install_cors(module)
             from health_patch import install as install_health
             install_health(module)
+            from philippines_catalog_patch import install as install_ph_catalog
+            install_ph_catalog(module)
             from artist_applications_patch import install as install_artist
             install_artist(module)
             from email_validation_patch import install as install_email_validation

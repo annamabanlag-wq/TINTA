@@ -2,11 +2,12 @@
   "expo": {
     "name": "TINTA",
     "slug": "tinta",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tinta",
     "userInterfaceStyle": "automatic",
+    "description": "TINTA — book tattoo artists in the Philippines. Open to the public.",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tinta.app",

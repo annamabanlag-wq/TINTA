@@ -1,7 +1,7 @@
 """Move the public preview roster onto Philippine cities.
 
-Keeps the same artist IDs so existing bookings and tests still resolve, but the
-Discover feed no longer looks like a Berlin/Tokyo demo to a Manila user.
+Keeps the same artist IDs so existing bookings still resolve, but Discover no
+longer shows Berlin / Tokyo / LA to a public Philippine audience.
 """
 
 PH_OVERLAY = {
@@ -65,25 +65,11 @@ PH_OVERLAY = {
 def install(module):
     db = module.db
 
-    async def _apply():
+    async def apply_ph_catalog():
         updated = 0
         for name, fields in PH_OVERLAY.items():
             result = await db.artists.update_many({"name": name}, {"$set": fields})
-            updated += result.modified_count
+            updated += int(getattr(result, "modified_count", 0) or 0)
         print(f"TINTA Philippine catalog overlay applied ({updated} artist rows)")
 
-    try:
-        loop = getattr(module, "asyncio", None)
-        import asyncio
-
-        try:
-            running = asyncio.get_running_loop()
-        except RuntimeError:
-            running = None
-        if running and running.is_running():
-            running.create_task(_apply())
-        else:
-            asyncio.get_event_loop().create_task(_apply())
-    except Exception as exc:
-        print(f"TINTA Philippine catalog overlay deferred: {exc}")
-        module.app.add_event_handler("startup", _apply)
+    module.app.add_event_handler("startup", apply_ph_catalog)
