@@ -66,6 +66,12 @@ APP_NAME = "inked-tattoo"
 storage_key: Optional[str] = None
 
 app = FastAPI()
+
+@app.get("/api/health")
+@app.get("/health")
+async def tinta_health():
+    return {"ok": True, "service": "tinta", "product": "TINTA"}
+
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
