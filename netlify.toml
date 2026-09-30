@@ -1,0 +1,19 @@
+[build]
+  base = "frontend"
+  command = "yarn install --frozen-lockfile && npx expo export --platform web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  EXPO_PUBLIC_BACKEND_URL = "https://tinta-backend.onrender.com"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://tinta-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

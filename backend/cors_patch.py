@@ -1,4 +1,4 @@
-"""Fix CORS for authenticated browser requests from the Render frontends."""
+"""Fix CORS for authenticated browser requests from TINTA frontends."""
 
 
 def install(module):
@@ -9,7 +9,6 @@ def install(module):
     # The original server used allow_origins=["*"] together with
     # allow_credentials=True. Browsers reject authenticated requests in that
     # configuration, which surfaces to the Expo web client as "Failed to fetch".
-    # Replace the CORS options before FastAPI builds its middleware stack.
     for middleware in getattr(app, "user_middleware", []):
         cls = getattr(middleware, "cls", None)
         if getattr(cls, "__name__", "") != "CORSMiddleware":
@@ -20,14 +19,23 @@ def install(module):
             "https://t-1.onrender.com",
             "https://tinta-artist.onrender.com",
             "https://tinta-admin.onrender.com",
+            "https://tinta-backend.onrender.com",
             "https://tinta-live.vercel.app",
             "https://tinta-artist-live.vercel.app",
             "https://tinta-admin-live.vercel.app",
+            "https://annamabanlag-wq.github.io",
+            "http://localhost:8081",
+            "http://localhost:19006",
+            "http://127.0.0.1:8081",
+            "http://127.0.0.1:19006",
         ]
-        # Keep both the legacy Render frontends and the TINTA-owned Vercel
-        # deployments/previews working. Restrict the Vercel regex to hosts
-        # beginning with "tinta" rather than opening CORS to all vercel.app apps.
-        kwargs["allow_origin_regex"] = r"^https://(?:[A-Za-z0-9-]+\.)?tinta(?:-[A-Za-z0-9-]+)*\.(?:onrender\.com|vercel\.app)$"
+        kwargs["allow_origin_regex"] = (
+            r"^https://(?:[A-Za-z0-9-]+\.)?"
+            r"(?:tinta(?:-[A-Za-z0-9-]+)*\.(?:onrender\.com|vercel\.app|netlify\.app)|"
+            r"annamabanlag-wq\.github\.io)$"
+            r"|^http://localhost(?::\d+)?$"
+            r"|^http://127\.0\.0\.1(?::\d+)?$"
+        )
         kwargs["allow_methods"] = ["*"]
         kwargs["allow_headers"] = ["*"]
         middleware.kwargs = kwargs

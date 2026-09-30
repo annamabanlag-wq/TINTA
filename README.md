@@ -1,50 +1,38 @@
 # TINTA
 
-TINTA is a tattoo booking and artist-management platform for customers, artists, and studio admins.
+Tattoo booking and artist-management platform. Product name is **TINTA**.
 
-## Status
+## Live artist signup check (2026-09-30)
 
-- Product name: **TINTA** (not Emergent)
-- Backend API: `https://tinta-backend.onrender.com/api`
-- Frontend: Expo / React Native web, served from the same Render image or Vercel
-- Latest fix: artist self-registration no longer depends on outbound email verification
+`POST https://tinta-backend.onrender.com/api/auth/register` with `role: "artist"` returns **200**, an access token, and:
 
-## Artist registration
-
-1. Open Sign up with `?role=artist` or use **Are you an artist? Apply here**
-2. Create the account with a real email and a password of at least 6 characters
-3. Complete the artist application (ID + finished work)
-4. Wait for TINTA admin approval before the public profile goes live
-
-Artist accounts are approved by admin review. They are not blocked if TINTA cannot send mail on the free host.
-
-## Free hosting
-
-The live stack is already on free tiers:
-
-- Backend + web app image: [Render](https://render.com) (`tinta-backend`)
-- Optional frontend rewrite: [Vercel](https://vercel.com) using `vercel.json`
-- Android APK builds: GitHub Actions in `.github/workflows/`
-
-Pushing to `main` rebuilds the Render image via `.github/workflows/build-render-image.yml`.
-
-To rename this GitHub repository from `TINTA-Emergent` to `TINTA`:
-
-1. GitHub → repo Settings → General → Repository name → `TINTA`
-2. Update any Render / Vercel repo connection if it does not follow the rename automatically
-
-## Local development
-
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn server:app --reload --port 8000
-
-cd ../frontend
-yarn install
-npx expo start --web
+```json
+{
+  "role": "artist",
+  "artist_portal": true,
+  "artist_identity_verified": false
+}
 ```
 
-Set `MONGO_URL`, `JWT_SECRET`, and `EXPO_PUBLIC_BACKEND_URL` before running.
+`GET /api/auth/me` keeps those flags. `GET /api/artist-applications/me` returns `{ "status": "not_started" }` so the new artist can open `/artist/apply`.
 
-Admin seed (if enabled): `admin@inked.dev` / `admin123`
+Use a real mailbox domain (Gmail, etc.). Fake domains like `example.com` are rejected on purpose.
+
+## Free hosts
+
+| Layer | Host | URL |
+| --- | --- | --- |
+| API + current web image | Render (existing) | https://tinta-backend.onrender.com |
+| Artist portal | Render / Vercel | https://tinta-artist.onrender.com and https://tinta-artist-live.vercel.app |
+| Customer web | Vercel | https://tinta-live.vercel.app |
+| New static web | GitHub Pages | https://annamabanlag-wq.github.io/TINTA-Emergent/ |
+| Optional static web | Netlify | import repo and use `netlify.toml` |
+
+The GitHub Pages workflow builds the Expo web app on every `main` push. Enable Pages if GitHub asks: Settings → Pages → Source = GitHub Actions.
+
+Backend still needs Mongo + Python, so the API stays on Render unless you connect Railway/Koyeb/Fly with the same `MONGO_URL` and `JWT_SECRET`.
+
+## Rename away from Emergent
+
+GitHub → Settings → General → Repository name → `TINTA`.
+After that, update `experiments.baseUrl` in `.github/workflows/pages.yml` to `/TINTA`.

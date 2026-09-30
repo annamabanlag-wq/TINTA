@@ -1,0 +1,61 @@
+name: Deploy TINTA to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Set Pages base path
+        working-directory: frontend
+        run: |
+          python3 - <<'PY'
+          import json
+          path = "app.json"
+          data = json.load(open(path))
+          expo = data.setdefault("expo", {})
+          experiments = expo.setdefault("experiments", {})
+          experiments["baseUrl"] = "/TINTA-Emergent"
+          json.dump(data, open(path, "w"), indent=2)
+          print("baseUrl set to /TINTA-Emergent")
+          PY
+      - name: Install and export web app
+        working-directory: frontend
+        env:
+          EXPO_PUBLIC_BACKEND_URL: https://tinta-backend.onrender.com
+          CI: "1"
+        run: |
+          yarn install --frozen-lockfile
+          npx expo export --platform web
+          cp dist/index.html dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
