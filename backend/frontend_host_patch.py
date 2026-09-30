@@ -18,6 +18,10 @@ def install(module):
         print("TINTA frontend host patch: frontend_dist/index.html not found; API-only mode")
         return
 
+    @app.get("/", include_in_schema=False)
+    async def _tinta_frontend_root():
+        return FileResponse(index)
+
     @app.get("/{full_path:path}", include_in_schema=False)
     async def _tinta_frontend(full_path: str):
         if full_path == "api" or full_path.startswith("api/"):
