@@ -13,7 +13,8 @@ import { fmtPHP } from "../../src/currency";
 
 const TIMES = ["10:00", "12:00", "14:00", "16:00", "18:00"];
 const HOURS = [1, 2, 3, 4, 5, 6];
-const DEPOSIT = 2900;\nconst TINTA_BOOKING_FEE = 199;
+const DEPOSIT = 2900;
+const TINTA_BOOKING_FEE = 199;
 
 function nextDates(count = 14) {
   const out: string[] = [];
