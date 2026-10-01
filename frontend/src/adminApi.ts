@@ -5,7 +5,7 @@ export type AdminStats = {
   users: number;
   artists: number;
   bookings: { total: number; paid: number; refunded: number; cancelled: number };
-  revenue: { gross: number; commission_earned: number; artist_earnings: number; pending_payouts: number };
+  revenue: { gross: number; commission_earned: number; booking_commission_earned?: number; booking_fee_revenue?: number; promotion_revenue?: number; platform_revenue?: number; artist_earnings: number; pending_payouts: number };
   commission_pct: number;
 };
 
@@ -60,6 +60,7 @@ export type AdminBooking = {
   service_fee?: number;
   deposit: number;
   amount_paid?: number;
+  platform_fee?: number;
   commission_amount?: number;
   artist_earnings?: number;
   status: string;
