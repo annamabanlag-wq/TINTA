@@ -21,11 +21,13 @@ export default function SignUp() {
     setErr("");
     setBusy(true);
     try {
-      await signUp(email.trim(), password, name.trim(), isArtist ? "artist" : "customer");
+      const signedIn = await signUp(email.trim(), password, name.trim(), isArtist ? "artist" : "customer");
       if (isArtist) {
         router.replace("/artist/apply");
-      } else {
+      } else if (signedIn) {
         router.replace("/(tabs)");
+      } else {
+        router.replace({ pathname: "/(auth)/verify-email", params: { email: email.trim(), role: "customer" } });
       }
     } catch (e: any) {
       setErr(e?.message ?? "Sign up failed");
@@ -34,7 +36,7 @@ export default function SignUp() {
     }
   };
 
-  const disabled = busy || !email || password.length < 6 || !name;
+  const disabled = busy || !email.trim() || password.length < 6 || !name.trim();
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : "height"}>
