@@ -40,11 +40,13 @@ function FeaturedCard({ featured, onPress }: { featured: Featured; onPress: () =
           <View style={styles.featBadgeRow}>
             <View style={styles.featBadge}>
               <Icon name="zap" size={12} color={colors.onBrand} />
-              <Text style={styles.featBadgeText}>{t("discover.featured")}</Text>
+              <Text style={styles.featBadgeText}>{featured.label || t("discover.featured")}</Text>
             </View>
-            <View style={styles.featDiscount}>
-              <Text style={styles.featDiscountText}>-{featured.discount_pct}%</Text>
-            </View>
+            {featured.discount_pct > 0 ? (
+              <View style={styles.featDiscount}>
+                <Text style={styles.featDiscountText}>-{featured.discount_pct}%</Text>
+              </View>
+            ) : null}
           </View>
           <View>
             <Text style={styles.featName}>{featured.artist.name.toUpperCase()}</Text>
