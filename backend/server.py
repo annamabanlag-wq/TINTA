@@ -1016,13 +1016,44 @@ class FeaturedOut(BaseModel):
     story: str
     deal_ends_at: str
     discount_pct: int
+    label: str = "ARTIST OF THE WEEK"
+    sponsored: bool = False
 
 
 @api_router.get("/featured", response_model=FeaturedOut)
 async def featured():
-    # Deterministic featured artist that rotates weekly
-    week_index = datetime.now(timezone.utc).isocalendar().week
-    artists = await db.artists.find({}, {"_id": 0}).sort("id", 1).to_list(200)
+    now = datetime.now(timezone.utc)
+
+    # Paid Spotlight placements take priority over the free weekly rotation.
+    promoted = await db.artists.find(
+        {
+            "active": {"$ne": False},
+            "promotion_status": "active",
+            "promotion_until": {"$gt": now.isoformat()},
+        },
+        {"_id": 0},
+    ).sort("id", 1).to_list(200)
+
+    if promoted:
+        week_index = now.isocalendar().week
+        picked = promoted[week_index % len(promoted)]
+        promotion_until = str(picked.get("promotion_until"))
+        return {
+            "artist": picked,
+            "headline": "TINTA SPOTLIGHT",
+            "label": "TINTA SPOTLIGHT · SPONSORED",
+            "story": "Sponsored artist placement. Support this verified TINTA artist by booking directly through the platform.",
+            "deal_ends_at": promotion_until,
+            "discount_pct": 0,
+            "sponsored": True,
+        }
+
+    # Free editorial rotation when there is no active paid Spotlight.
+    week_index = now.isocalendar().week
+    artists = await db.artists.find(
+        {"active": {"$ne": False}},
+        {"_id": 0},
+    ).sort("id", 1).to_list(200)
     if not artists:
         raise HTTPException(404, "No artists")
     picked = artists[week_index % len(artists)]
@@ -1031,8 +1062,6 @@ async def featured():
         "Featured artist of the week. Booking a session unlocks a bonus custom sketch for your idea.",
         "Hand-picked by our editors — a rare style, a bold voice. 15% off the deposit until Sunday.",
     ]
-    # End of ISO week (Sunday 23:59 UTC)
-    now = datetime.now(timezone.utc)
     days_until_sunday = 6 - now.weekday()
     if days_until_sunday < 0:
         days_until_sunday += 7
@@ -1040,9 +1069,11 @@ async def featured():
     return {
         "artist": picked,
         "headline": "ARTIST OF THE WEEK",
+        "label": "ARTIST OF THE WEEK",
         "story": stories[week_index % len(stories)],
         "deal_ends_at": end.isoformat(),
         "discount_pct": 15,
+        "sponsored": False,
     }
 
 
