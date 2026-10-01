@@ -53,7 +53,7 @@ type Ctx = {
   token: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, role?: "customer" | "artist") => Promise<void>;
+  signUp: (email: string, password: string, name: string, role?: "customer" | "artist") => Promise<boolean>;
   signOut: () => Promise<void>;
 };
 
@@ -155,9 +155,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [token, clearSession, revokeServerSession]);
 
-  const doAuth = useCallback(async (path: string, body: any, persist = true) => {
+  const doAuth = useCallback(async (path: string, body: any, persist = true): Promise<AuthOut> => {
     const r = await api<AuthOut>(path, { method: "POST", body: JSON.stringify(body) });
-    if (!r.access_token) { await clearSession(); return; }
+    if (!r.access_token) { await clearSession(); return r; }
     const me = await api<User>("/auth/me", {}, r.access_token);
     if (isArtistHost() && !isArtistUser(me)) {
       await clearSession();
@@ -169,11 +169,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setToken(r.access_token);
       setUser(me);
     } else await clearSession();
+    return r;
   }, [clearSession]);
 
-  const signIn = useCallback((email: string, password: string) => doAuth("/auth/login", { email, password }), [doAuth]);
-  const signUp = useCallback((email: string, password: string, name: string, role: "customer" | "artist" = "customer") =>
-    doAuth("/auth/register", { email, password, name, role }, role === "artist"), [doAuth]);
+  const signIn = useCallback(async (email: string, password: string) => { await doAuth("/auth/login", { email, password }); }, [doAuth]);
+  const signUp = useCallback(async (email: string, password: string, name: string, role: "customer" | "artist" = "customer") => {
+    const result = await doAuth("/auth/register", { email, password, name, role }, role === "artist");
+    return Boolean(result.access_token);
+  }, [doAuth]);
   const signOut = useCallback(async () => {
     const t = tokenRef.current;
     await revokeServerSession(t);
