@@ -1,0 +1,23 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: tinta
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "2"
+    spec:
+      containerConcurrency: 80
+      containers:
+        - image: PLACEHOLDER_IMAGE
+          ports:
+            - containerPort: 8000
+          env:
+            - name: TINTA_REQUIRE_EMAIL_VERIFICATION
+              value: "false"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: TINTA_ALLOW_MOCK_PAYMENTS
+              value: "false"
