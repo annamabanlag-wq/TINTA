@@ -26,7 +26,7 @@ export default function AdminTab() {
       <NavTile testID="nav-registrations" icon="user-plus" label="REGISTRATIONS" hint="See every new customer and artist signup" onPress={()=>router.push("/admin/registrations")}/>
       <NavTile testID="nav-users" icon="users" label={t("admin.nav.users")} hint={`${stats.users} total`} onPress={()=>router.push("/admin/users")}/>
       <NavTile testID="nav-artists" icon="user-check" label={t("admin.nav.artists")} hint={`${stats.artists} active`} onPress={()=>router.push("/admin/artists")}/>
-      <NavTile testID="nav-artist-applications" icon="file-text" label="ARTIST APPLICATIONS" hint="Review and verify new artists" onPress={()=>router.push("/admin/artist-applications")}/>
+      <NavTile testID="nav-artist-applications" icon="file-text" label="ARTIST APPLICATIONS" hint="Review and verify new artists" onPress={()=>router.push("/admin/artist-applications")}/><NavTile testID="nav-promotions" icon="trending-up" label="PROMOTIONS" hint="Review paid Spotlight placements" onPress={()=>router.push("/admin/promotions")}/>
       <NavTile testID="nav-bookings" icon="calendar" label={t("admin.nav.bookings")} hint={`${stats.bookings.total} total`} onPress={()=>router.push("/admin/bookings")}/>
       <NavTile testID="nav-payments" icon="credit-card" label={t("admin.nav.payments")} hint={`${stats.bookings.paid} paid`} onPress={()=>router.push("/admin/payments")}/>
       <NavTile testID="nav-commissions" icon="pie-chart" label={t("admin.nav.commissions")} hint={fmtPHP(stats.revenue.commission_earned)} onPress={()=>router.push("/admin/commissions")}/>
