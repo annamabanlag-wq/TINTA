@@ -121,6 +121,7 @@ export type Booking = {
   service_address?: string | null;
   service_fee?: number;
   deposit: number;
+  platform_fee?: number;
   status: string;
   payment_status: string;
   payment_method?: string | null;
