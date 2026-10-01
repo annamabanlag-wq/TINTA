@@ -2,37 +2,30 @@
 
 Tattoo booking and artist-management platform. Product name is **TINTA**.
 
-## Live artist signup check (2026-09-30)
+Repo: https://github.com/annamabanlag-wq/TINTA
 
-`POST https://tinta-backend.onrender.com/api/auth/register` with `role: "artist"` returns **200**, an access token, and:
+The old `TINTA-Emergent` GitHub URL redirects here.
 
-```json
-{
-  "role": "artist",
-  "artist_portal": true,
-  "artist_identity_verified": false
-}
-```
+## Live
 
-`GET /api/auth/me` keeps those flags. `GET /api/artist-applications/me` returns `{ "status": "not_started" }` so the new artist can open `/artist/apply`.
+| Layer | URL |
+| --- | --- |
+| Customer app | https://tinta-live.vercel.app |
+| Artist portal | https://tinta-artist-live.vercel.app |
+| Artist portal (Render) | https://tinta-artist.onrender.com |
+| API + web image | https://tinta-backend.onrender.com |
+| Health | https://tinta-backend.onrender.com/api/health |
 
-Use a real mailbox domain (Gmail, etc.). Fake domains like `example.com` are rejected on purpose.
+Artist signup: `POST /api/auth/register` with `role: "artist"` returns 200, an access token, `artist_portal: true`, and `artist_identity_verified: false`. Use a real mailbox domain. Fake domains like `example.com` are rejected on purpose.
 
-## Free hosts
+Render free instances sleep. The first request can take about 30 seconds, then health returns `{"ok":true,"service":"tinta","product":"TINTA"}`.
 
-| Layer | Host | URL |
-| --- | --- | --- |
-| API + current web image | Render (existing) | https://tinta-backend.onrender.com |
-| Artist portal | Render / Vercel | https://tinta-artist.onrender.com and https://tinta-artist-live.vercel.app |
-| Customer web | Vercel | https://tinta-live.vercel.app |
-| New static web | GitHub Pages | https://annamabanlag-wq.github.io/TINTA-Emergent/ |
-| Optional static web | Netlify | import repo and use `netlify.toml` |
+## GitHub Pages
 
-The GitHub Pages workflow builds the Expo web app on every `main` push. Enable Pages if GitHub asks: Settings → Pages → Source = GitHub Actions.
+Workflow base path is `/TINTA`. Pages is not on until you enable it once:
 
-Backend still needs Mongo + Python, so the API stays on Render unless you connect Railway/Koyeb/Fly with the same `MONGO_URL` and `JWT_SECRET`.
+Settings → Pages → Build and deployment → Source = GitHub Actions.
 
-## Rename away from Emergent
+After that, the site is https://annamabanlag-wq.github.io/TINTA/
 
-GitHub → Settings → General → Repository name → `TINTA`.
-After that, update `experiments.baseUrl` in `.github/workflows/pages.yml` to `/TINTA`.
+Backend still needs Mongo + Python, so the API stays on Render unless you connect another host with the same `MONGO_URL` and `JWT_SECRET`.

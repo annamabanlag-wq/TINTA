@@ -33,9 +33,9 @@ jobs:
           data = json.load(open(path))
           expo = data.setdefault("expo", {})
           experiments = expo.setdefault("experiments", {})
-          experiments["baseUrl"] = "/TINTA-Emergent"
+          experiments["baseUrl"] = "/TINTA"
           json.dump(data, open(path, "w"), indent=2)
-          print("baseUrl set to /TINTA-Emergent")
+          print("baseUrl set to /TINTA")
           PY
       - name: Install and export web app
         working-directory: frontend
