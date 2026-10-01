@@ -1,4 +1,5 @@
 // TINTA production deployment trigger.
+// Keep this file deploy-triggerable from main.
 // Use the live TINTA backend directly so the Vercel artist portal does not
 // depend on a deployment-specific /api rewrite. The backend CORS policy already
 // allows the TINTA Vercel domains.
