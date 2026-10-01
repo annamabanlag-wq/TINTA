@@ -20,6 +20,8 @@ Artist signup: `POST /api/auth/register` with `role: "artist"` returns 200, an a
 
 Render free instances sleep. The first request can take about 30 seconds, then health returns `{"ok":true,"service":"tinta","product":"TINTA"}`.
 
+Payments: customer bookings use the manual GCash verification flow. Placeholder Stripe/mock payments are disabled by default; enable them only in a controlled test environment with `TINTA_ALLOW_MOCK_PAYMENTS=true`.
+
 ## GitHub Pages
 
 Workflow base path is `/TINTA`. Pages is not on until you enable it once:
