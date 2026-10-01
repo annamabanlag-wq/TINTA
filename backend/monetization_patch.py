@@ -132,7 +132,7 @@ def install(module):
     def admin_stats_factory(original):
         @wraps(original)
         async def wrapped(*args, **kwargs):
-            result = await _original(*args, **kwargs)
+            result = await original(*args, **kwargs)
             if not isinstance(result, dict):
                 return result
             paid = await db.bookings.aggregate([
