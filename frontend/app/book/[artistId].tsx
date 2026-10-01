@@ -83,7 +83,8 @@ export default function BookScreen() {
   }, [bookedSlots, time]);
 
   const serviceFee = homeService && artist?.home_service_available ? (artist.home_service_fee ?? 0) : 0;
-  const total = (artist?.rate_per_hour ?? 0) * hours + serviceFee;\n  const paymentDue = DEPOSIT + serviceFee + TINTA_BOOKING_FEE;
+  const total = (artist?.rate_per_hour ?? 0) * hours + serviceFee;
+  const paymentDue = DEPOSIT + serviceFee + TINTA_BOOKING_FEE;
   const canStep1 = !!date && !!time;
   const canStep2 = desc.trim().length > 5 && (!homeService || serviceAddress.trim().length > 5);
 
