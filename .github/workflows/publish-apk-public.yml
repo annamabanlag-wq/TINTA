@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read
-      contents: read
+      contents: write
 
     steps:
       - name: Download APK artifact from completed build
@@ -31,24 +31,15 @@ jobs:
           test -n "$APK"
           echo "path=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK to public download host
-        id: upload
+      - name: Publish APK as a public GitHub Release
         shell: bash
         run: |
           APK="${{ steps.apk.outputs.path }}"
-          URL="$(curl -fsSL -A "TINTA-APK-Publisher/1.0" -F "reqtype=fileupload" -F "fileToUpload=@${APK}" https://catbox.moe/user/api.php)"
-          test -n "$URL"
-          printf '%s\n' "$URL" > TINTA-APK-DOWNLOAD.txt
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          {
-            echo "## TINTA APK — Public Download"
-            echo
-            echo "$URL"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Save public download link
-        uses: actions/upload-artifact@v4
-        with:
-          name: TINTA-public-download-link
-          path: TINTA-APK-DOWNLOAD.txt
-          if-no-files-found: error
+          TAG="apk-${{ github.event.workflow_run.id }}"
+          gh release create "$TAG" "$APK" \
+            --repo "${{ github.repository }}" \
+            --title "TINTA Android APK" \
+            --notes "Public TINTA Android build from workflow run ${{ github.event.workflow_run.id }}." \
+            --latest=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

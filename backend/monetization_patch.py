@@ -150,3 +150,21 @@ def install(module):
         return wrapped
 
     replace_route("/admin/stats", "GET", admin_stats_factory, "_tinta_admin_stats_monetized")
+
+    app = getattr(module, "app", None)
+    if app is not None:
+        async def public_pricing():
+            return {
+                "currency": "PHP",
+                "booking_fee": fee,
+                "commission_pct": 15,
+                "payments": "GCash manual verification",
+                "packages": [
+                    {"id": "spotlight_7d", "name": "TINTA SPOTLIGHT · 7 DAYS", "price": 499, "days": 7},
+                    {"id": "spotlight_30d", "name": "TINTA SPOTLIGHT · 30 DAYS", "price": 1499, "days": 30},
+                    {"id": "studio_pro_30d", "name": "TINTA STUDIO PRO · 30 DAYS", "price": 999, "days": 30},
+                ],
+                "note": "Customers pay a booking fee plus the artist deposit. Artists keep the session rate minus the 15% platform commission after a verified GCash payment.",
+            }
+
+        app.add_api_route("/api/pricing", public_pricing, methods=["GET"])

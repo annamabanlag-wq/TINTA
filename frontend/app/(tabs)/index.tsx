@@ -124,7 +124,7 @@ export default function Discover() {
               <Text style={styles.brandText}>TINTA</Text>
               <View style={styles.liveMark}><View style={styles.liveDot} /></View>
             </View>
-            <Text style={styles.hi}>WELCOME BACK, {user?.name?.split(" ")[0]?.toUpperCase() ?? "INK"}</Text>
+            <Text style={styles.hi}>{user ? `WELCOME BACK, ${user.name?.split(" ")[0]?.toUpperCase() ?? "INK"}` : "BROWSE FIRST. BOOK WHEN YOU ARE READY."}</Text>
             <Text style={styles.headerTitle}>FIND YOUR NEXT INK.</Text>
           </View>
           <Pressable testID="home-profile-button" onPress={() => router.push("/(tabs)/profile")} style={styles.logo}>

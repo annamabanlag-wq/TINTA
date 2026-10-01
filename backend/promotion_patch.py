@@ -27,6 +27,13 @@ PACKAGES = {
         "days": 30,
         "description": "Priority featured placement in the customer Discover feed for 30 days.",
     },
+    "studio_pro_30d": {
+        "id": "studio_pro_30d",
+        "name": "TINTA STUDIO PRO · 30 DAYS",
+        "price": 999,
+        "days": 30,
+        "description": "Verified studio badge, priority ranking, and Spotlight placement for 30 days.",
+    },
 }
 
 

@@ -13,6 +13,21 @@ export default function ProfileTab() {
   const { user, token, signOut } = useSession();
   const { t, locale, setLocale } = useI18n();
 
+  if (!user) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + spacing.xl, paddingHorizontal: spacing.lg }]}>
+        <Text style={styles.name}>YOUR ACCOUNT</Text>
+        <Text style={styles.email}>Sign in to book, save artists, and pay the session deposit.</Text>
+        <Pressable onPress={() => router.push("/(auth)/sign-in")} style={styles.signOut}>
+          <Text style={styles.signOutText}>SIGN IN</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push("/(auth)/sign-up")} style={styles.row}>
+          <Text style={styles.rowLabel}>CREATE AN ACCOUNT</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   const doSignOut = async () => {
     await signOut();
     router.replace("/(auth)/sign-in");

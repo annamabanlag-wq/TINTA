@@ -32,7 +32,7 @@ function AppEntry() {
     return <Redirect href={user ? "/admin/payments" : "/(auth)/sign-in?next=admin"} />;
   }
 
-  return <Redirect href={user ? "/(tabs)" : "/(auth)/sign-in"} />;
+  return <Redirect href={user ? "/(tabs)" : "/(tabs)"} />;
 }
 
 export default function Index() {

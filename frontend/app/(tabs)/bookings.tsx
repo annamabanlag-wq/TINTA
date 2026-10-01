@@ -23,6 +23,11 @@ export default function BookingsTab() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       setError("");
       const [data, fu] = await Promise.all([
@@ -37,6 +42,17 @@ export default function BookingsTab() {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+
+  if (!token) {
+    return (
+      <View style={[styles.center, { paddingTop: insets.top }]}>
+        <Text style={styles.emptyBig}>SIGN IN TO SEE BOOKINGS</Text>
+        <Pressable onPress={() => router.push("/(auth)/sign-in")} style={styles.bookBtn}>
+          <Text style={styles.bookText}>SIGN IN</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   const cancel = async (id: string) => {
     try {
@@ -223,6 +239,8 @@ const styles = StyleSheet.create({
   errorBannerText: { color: colors.onSurfaceSecondary, flex: 1, fontSize: 11, lineHeight: 15 },
   errorRetry: { color: colors.brand, fontSize: 10, fontWeight: "900", letterSpacing: 1.5 },
   emptyBig: { color: colors.onSurface, fontSize: 44, fontWeight: "900", letterSpacing: 2, textAlign: "center", lineHeight: 48 },
+  bookBtn: { borderWidth: 2, borderColor: colors.brand, paddingVertical: 14, paddingHorizontal: 28 },
+  bookText: { color: colors.brand, fontWeight: "900", letterSpacing: 2 },
   cta: { backgroundColor: colors.brand, paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
   ctaText: { color: colors.onBrand, fontSize: 13, fontWeight: "900", letterSpacing: 2 },
   row: { padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.divider },

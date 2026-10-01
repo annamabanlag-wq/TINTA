@@ -9,9 +9,8 @@ export default function TabsLayout() {
   const { user, loading } = useSession();
   const { t } = useI18n();
   if (loading) return null;
-  if (!user) return <Redirect href="/(auth)/sign-in" />;
 
-  const isAdmin = !!user.is_admin;
+  const isAdmin = !!user?.is_admin;
 
   return (
     <Tabs
@@ -41,6 +40,7 @@ export default function TabsLayout() {
         name="bookings"
         options={{
           title: t("tab.bookings"),
+          href: user ? "/(tabs)/bookings" : null,
           tabBarIcon: ({ color, size }) => <Icon name="calendar" size={size} color={color} />,
         }}
       />
@@ -48,6 +48,7 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: t("tab.messages"),
+          href: user ? "/(tabs)/messages" : null,
           tabBarIcon: ({ color, size }) => <Icon name="message-square" size={size} color={color} />,
         }}
       />

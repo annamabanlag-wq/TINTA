@@ -69,6 +69,9 @@ export default function SignIn() {
           <Link href={signupHref} asChild>
             <Pressable testID="go-to-signup-button" style={styles.secondaryBtn}><Text style={styles.secondaryText}>CREATE AN ACCOUNT →</Text></Pressable>
           </Link>
+          {!isArtist && <Link href="/(tabs)" asChild>
+            <Pressable testID="browse-artists-button" style={styles.artistBtn}><Text style={styles.artistText}>BROWSE ARTISTS WITHOUT AN ACCOUNT →</Text></Pressable>
+          </Link>}
           {!isArtist && <Link href="/artist/apply" asChild>
             <Pressable style={styles.artistBtn}><Text style={styles.artistText}>ARE YOU AN ARTIST? APPLY HERE →</Text></Pressable>
           </Link>}

@@ -63,7 +63,9 @@ class _ServerLoader(importlib.abc.Loader):
             from registration_admin_patch import install as install_registration_admin
             install_registration_admin(module)
             from promotion_patch import install as install_promotions
-            install_promotions(module)\n            from monetization_patch import install as install_monetization\n            install_monetization(module)
+            install_promotions(module)
+            from monetization_patch import install as install_monetization
+            install_monetization(module)
         except Exception as exc:
             print(f"TINTA startup patches not installed: {exc}")
             raise
