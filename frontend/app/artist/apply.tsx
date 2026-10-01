@@ -106,7 +106,20 @@ export default function ArtistApply() {
   const submit = async () => {
     setSubmitError(""); setSubmitNotice("");
     if (!token) { setSubmitError("Your session expired. Please sign in again as an artist."); return; }
-    if (!name.trim() || !handle.trim() || !city.trim() || !studio.trim() || bio.trim().length < 10 || !rate.trim()) { setSubmitError("Please complete all required profile fields before submitting."); return; }
+    const missingFields: string[] = [];
+    if (!name.trim()) missingFields.push("NAME");
+    if (!handle.trim()) missingFields.push("HANDLE");
+    if (!city.trim()) missingFields.push("CITY");
+    if (!studio.trim()) missingFields.push("STUDIO");
+    if (!rate.trim()) missingFields.push("RATE PER HOUR");
+    if (missingFields.length) {
+      setSubmitError(`Missing required fields: ${missingFields.join(", ")}.`);
+      return;
+    }
+    if (bio.trim().length < 10) {
+      setSubmitError("BIO must contain at least 10 characters.");
+      return;
+    }
     if (!governmentIdPath) { setSubmitError("Upload a government-issued ID before submitting."); return; }
     if (!completedWorkPaths.length) { setSubmitError("Upload at least one finished tattoo work photo before submitting."); return; }
     const rateValue = Number(rate.replace(/,/g, "").replace(/₱/g, "").trim());
