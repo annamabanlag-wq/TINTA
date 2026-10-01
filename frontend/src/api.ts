@@ -167,6 +167,8 @@ export type Featured = {
   story: string;
   deal_ends_at: string;
   discount_pct: number;
+  label?: string;
+  sponsored?: boolean;
 };
 
 export type CheckoutSessionOut = {
