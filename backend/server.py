@@ -1143,6 +1143,16 @@ async def admin_stats(_=Depends(require_admin)):
     commission = agg[0]["commission"] if agg else 0
     artist_earn = agg[0]["artist_earn"] if agg else 0
 
+    # Spotlight purchases are direct TINTA revenue and must be included separately
+    # from booking GMV/artist earnings so the admin dashboard has a complete
+    # picture of platform revenue.
+    promo_agg = await db.artist_promotions.aggregate([
+        {"$match": {"status": "approved"}},
+        {"$group": {"_id": None, "revenue": {"$sum": {"$ifNull": ["$amount", 0]}}}},
+    ]).to_list(1)
+    promotion_revenue = promo_agg[0]["revenue"] if promo_agg else 0
+    platform_revenue = commission + promotion_revenue
+
     # Pending payouts (paid but not yet paid_out and not refunded)
     pending_pipeline = [
         {"$match": {"status": "pending_payout"}},
@@ -1162,7 +1172,10 @@ async def admin_stats(_=Depends(require_admin)):
         },
         "revenue": {
             "gross": gross,
-            "commission_earned": commission,
+            "commission_earned": platform_revenue,
+            "booking_commission_earned": commission,
+            "promotion_revenue": promotion_revenue,
+            "platform_revenue": platform_revenue,
             "artist_earnings": artist_earn,
             "pending_payouts": pending_payouts,
         },
