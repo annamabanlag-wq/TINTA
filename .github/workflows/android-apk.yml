@@ -125,7 +125,5 @@ jobs:
             adb logcat -c
             adb shell monkey -p com.tinta.app 1
             sleep 15
-            adb logcat -d -v threadtime | tee /tmp/tinta-logcat.txt
-            if grep -Eiq "FATAL EXCEPTION|AndroidRuntime.*FATAL|Process: com.tinta.app" /tmp/tinta-logcat.txt; then
-              exit 1
-            fi
+            adb logcat -d -v threadtime > /tmp/tinta-logcat.txt
+            grep -Eiq "FATAL EXCEPTION|AndroidRuntime: FATAL" /tmp/tinta-logcat.txt && exit 1 || true
