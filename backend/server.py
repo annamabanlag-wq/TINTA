@@ -30,11 +30,17 @@ if not JWT_SECRET:
 JWT_ALG = "HS256"
 JWT_MINUTES = 60 * 24 * 7  # 7 days
 
-# Stripe
+# Payments
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 CURRENCY = "php"
 DEPOSIT_AMOUNT_MINOR = 290000  # ₱2,900 in centavos
 DEPOSIT_AMOUNT_MAJOR = 2900     # ₱2,900
+
+# Fake checkout is disabled by default in production. Enable it only in a
+# controlled test environment with TINTA_ALLOW_MOCK_PAYMENTS=true.
+ALLOW_MOCK_PAYMENTS = os.environ.get("TINTA_ALLOW_MOCK_PAYMENTS", "false").strip().lower() in {
+    "1", "true", "yes", "on"
+}
 
 # Public URL used for callback/redirect URLs. Prefer APP_URL (Emergent deploy injects this at
 # runtime) over any committed BACKEND_PUBLIC_URL so deploy env always wins.
@@ -724,8 +730,13 @@ async def create_checkout_session(body: CheckoutIn, user=Depends(current_user)):
     if booking.get("payment_status") == "paid":
         raise HTTPException(409, "Booking is already paid")
 
-    # If Stripe not configured with a real key, use a mock checkout page
+    # Placeholder Stripe keys must never create a real-looking checkout in production.
     is_placeholder = (not stripe.api_key) or stripe.api_key in ("sk_test_emergent", "")
+    if is_placeholder and not ALLOW_MOCK_PAYMENTS:
+        raise HTTPException(
+            503,
+            "Online card/Maya checkout is not configured. Please use the TINTA GCash payment flow."
+        )
     frontend_base = PUBLIC_URL
     method = (body.payment_method or "card").lower()
     if method not in STRIPE_METHOD_MAP:
@@ -772,8 +783,11 @@ async def create_checkout_session(body: CheckoutIn, user=Depends(current_user)):
 
 @api_router.get("/payments/verify/{session_id}")
 async def verify_payment(session_id: str, user=Depends(current_user)):
-    # Mock verification path — booking has been "paid" via our mock page
+    # Mock verification is available only in an explicitly enabled test environment.
     if session_id.startswith("mock_"):
+        if not ALLOW_MOCK_PAYMENTS:
+            raise HTTPException(410, "Test payment sessions are disabled.")
+
         booking = await db.bookings.find_one({"checkout_session_id": session_id, "user_id": user["id"]}, {"_id": 0})
         if not booking:
             raise HTTPException(404, "Session not found")
@@ -861,7 +875,9 @@ class MockConfirmIn(BaseModel):
 
 @api_router.post("/payments/mock-confirm")
 async def mock_confirm(body: MockConfirmIn, user=Depends(current_user)):
-    """Called by the mock checkout page to simulate a successful payment (test mode)."""
+    """Called by the mock checkout page in an explicitly enabled test environment."""
+    if not ALLOW_MOCK_PAYMENTS:
+        raise HTTPException(410, "Test payment confirmations are disabled.")
     booking = await db.bookings.find_one({"checkout_session_id": body.session_id, "user_id": user["id"]}, {"_id": 0})
     if not booking:
         raise HTTPException(404, "Session not found")
