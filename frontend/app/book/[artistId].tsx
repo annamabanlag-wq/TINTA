@@ -13,7 +13,7 @@ import { fmtPHP } from "../../src/currency";
 
 const TIMES = ["10:00", "12:00", "14:00", "16:00", "18:00"];
 const HOURS = [1, 2, 3, 4, 5, 6];
-const DEPOSIT = 2900;
+const DEPOSIT = 2900;\nconst TINTA_BOOKING_FEE = 199;
 
 function nextDates(count = 14) {
   const out: string[] = [];
@@ -82,7 +82,7 @@ export default function BookScreen() {
   }, [bookedSlots, time]);
 
   const serviceFee = homeService && artist?.home_service_available ? (artist.home_service_fee ?? 0) : 0;
-  const total = (artist?.rate_per_hour ?? 0) * hours + serviceFee;
+  const total = (artist?.rate_per_hour ?? 0) * hours + serviceFee;\n  const paymentDue = DEPOSIT + serviceFee + TINTA_BOOKING_FEE;
   const canStep1 = !!date && !!time;
   const canStep2 = desc.trim().length > 5 && (!homeService || serviceAddress.trim().length > 5);
 
@@ -182,7 +182,7 @@ export default function BookScreen() {
         <View style={styles.checkBox}><Icon name="check" size={48} color={colors.onBrand} /></View>
         <Text style={styles.doneTitle}>PAYMENT SUBMITTED</Text>
         <Text style={styles.doneMeta}>{artist.name.toUpperCase()} · {date} @ {time}</Text>
-        <Text style={styles.doneNote}>{fmtPHP(DEPOSIT)} GCash deposit is PENDING VERIFICATION. · Total ~{fmtPHP(total)}</Text>
+        <Text style={styles.doneNote}>{fmtPHP(paymentDue)} total payment submitted: artist deposit + TINTA booking fee{serviceFee > 0 ? " + home-service fee" : ""}. PENDING VERIFICATION. · Estimated tattoo total ~{fmtPHP(total)}</Text>
         <Pressable testID="done-view-bookings" onPress={() => router.replace("/(tabs)/bookings")} style={styles.doneCta}>
           <Text style={styles.doneCtaText}>VIEW MY BOOKINGS</Text>
         </Pressable>
@@ -249,8 +249,8 @@ export default function BookScreen() {
         </>}
 
         {step === 3 && <>
-          <View style={styles.summary}><Text style={styles.blockTitle}>BOOKING SUMMARY</Text><SummaryRow k="ARTIST" v={artist.name} /><SummaryRow k="DATE" v={date} /><SummaryRow k="TIME" v={time} /><SummaryRow k="HOURS" v={`${hours}H`} /><SummaryRow k="RATE" v={`${fmtPHP(artist.rate_per_hour)}/HR`} />{serviceFee > 0 && <SummaryRow k="HOME SERVICE" v={`+${fmtPHP(serviceFee)}`} />}<View style={styles.divider} /><SummaryRow k="ESTIMATED TOTAL" v={fmtPHP(total)} big /><SummaryRow k="GCASH DEPOSIT DUE" v={fmtPHP(DEPOSIT)} accent /></View>
-          <View style={styles.summary}><Text style={styles.blockTitle}>GCASH PAYMENT</Text><Text style={styles.paymentTitle}>SEND {fmtPHP(DEPOSIT)} TO</Text><Image source={require("../../assets/GCash-MyQR-12092026210418.PNG.jpg")} style={styles.qr} contentFit="contain" /><Text style={styles.merchant}>TINTA</Text><Text style={styles.phone}>GCash: 09381447214</Text><Text style={styles.payInstruction}>Send the required GCash deposit, then upload your payment receipt and enter your reference number below. Your payment will remain pending until an admin verifies it.</Text><TextInput testID="gcash-reference-input" value={gcashReference} onChangeText={setGcashReference} placeholder="GCash Reference Number *" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="characters" />
+          <View style={styles.summary}><Text style={styles.blockTitle}>BOOKING SUMMARY</Text><SummaryRow k="ARTIST" v={artist.name} /><SummaryRow k="DATE" v={date} /><SummaryRow k="TIME" v={time} /><SummaryRow k="HOURS" v={`${hours}H`} /><SummaryRow k="RATE" v={`${fmtPHP(artist.rate_per_hour)}/HR`} />{serviceFee > 0 && <SummaryRow k="HOME SERVICE" v={`+${fmtPHP(serviceFee)}`} />}<View style={styles.divider} /><SummaryRow k="ESTIMATED TOTAL" v={fmtPHP(total)} big /><SummaryRow k="ARTIST DEPOSIT" v={fmtPHP(DEPOSIT)} /><SummaryRow k="TINTA BOOKING FEE" v={fmtPHP(TINTA_BOOKING_FEE)} /><SummaryRow k="GCASH TOTAL DUE" v={fmtPHP(paymentDue)} accent /></View>
+          <View style={styles.summary}><Text style={styles.blockTitle}>GCASH PAYMENT</Text><Text style={styles.paymentTitle}>SEND {fmtPHP(paymentDue)} TOTAL TO</Text><Image source={require("../../assets/GCash-MyQR-12092026210418.PNG.jpg")} style={styles.qr} contentFit="contain" /><Text style={styles.merchant}>TINTA</Text><Text style={styles.phone}>GCash: 09381447214</Text><Text style={styles.payInstruction}>Send the total shown above. This includes the ₱2,900 artist deposit, the TINTA ₱199 booking fee, and any applicable home-service fee. Your payment remains pending until an admin verifies it.</Text><TextInput testID="gcash-reference-input" value={gcashReference} onChangeText={setGcashReference} placeholder="GCash Reference Number *" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="characters" />
             {gcashReceiptUri ? <View style={styles.receiptSelected}><View style={styles.refWrap}><Image source={gcashReceiptUri} style={StyleSheet.absoluteFill} contentFit="cover" /><Pressable testID="remove-gcash-receipt" onPress={clearGcashReceipt} style={styles.refRemove}><Icon name="x" size={16} color={colors.onSurface} /></Pressable></View><Text style={styles.receiptSelectedText}>GCASH RECEIPT SELECTED</Text><Text style={styles.receiptHint}>This exact image will be submitted. Choose another image to replace it.</Text><Pressable testID="change-gcash-receipt" onPress={() => pickImage("receipt")} style={styles.changeReceiptBtn}><Icon name="refresh-cw" size={16} color={colors.onBrand} /><Text style={styles.changeReceiptText}>CHANGE RECEIPT</Text></Pressable></View> : <Pressable testID="pick-gcash-receipt" onPress={() => pickImage("receipt")} style={styles.pickBtn}><Icon name="camera" size={24} color={colors.brand} /><Text style={styles.pickText}>SELECT GCASH RECEIPT *</Text></Pressable>}
             <TextInput testID="gcash-receipt-input" value={gcashReceiptUrl} onChangeText={setGcashReceiptUrl} placeholder="Receipt URL (optional if uploaded)" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="none" />
           </View>
@@ -259,7 +259,7 @@ export default function BookScreen() {
       </ScrollView>
 
       <View style={[styles.stickyBar, { paddingBottom: insets.bottom + spacing.md }]}> 
-        {step < 3 ? <Pressable testID="book-next-button" onPress={() => setStep((step + 1) as 2 | 3)} disabled={step === 1 ? !canStep1 : !canStep2} style={[styles.bookBtn, (step === 1 ? !canStep1 : !canStep2) && { opacity: 0.5 }]}><Text style={styles.bookText}>CONTINUE</Text><Icon name="arrow-right" size={20} color={colors.onBrand} /></Pressable> : <Pressable testID="book-confirm-button" onPress={createBookingAndPay} disabled={busy} style={[styles.bookBtn, busy && { opacity: 0.5 }]}><Text style={styles.bookText}>{busy ? (uploading ? "UPLOADING..." : "SUBMITTING...") : `SUBMIT GCash ${fmtPHP(DEPOSIT)}`}</Text><Icon name="lock" size={18} color={colors.onBrand} /></Pressable>}
+        {step < 3 ? <Pressable testID="book-next-button" onPress={() => setStep((step + 1) as 2 | 3)} disabled={step === 1 ? !canStep1 : !canStep2} style={[styles.bookBtn, (step === 1 ? !canStep1 : !canStep2) && { opacity: 0.5 }]}><Text style={styles.bookText}>CONTINUE</Text><Icon name="arrow-right" size={20} color={colors.onBrand} /></Pressable> : <Pressable testID="book-confirm-button" onPress={createBookingAndPay} disabled={busy} style={[styles.bookBtn, busy && { opacity: 0.5 }]}><Text style={styles.bookText}>{busy ? (uploading ? "UPLOADING..." : "SUBMITTING...") : `SUBMIT GCash ${fmtPHP(paymentDue)}`}</Text><Icon name="lock" size={18} color={colors.onBrand} /></Pressable>}
       </View>
     </KeyboardAvoidingView>
   );
