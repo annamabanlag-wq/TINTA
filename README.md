@@ -38,13 +38,16 @@ The customer and artist apps do not depend on Pages. They are already on Vercel.
 
 ## How it makes money
 
-Payments are manual GCash verification. Placeholder Stripe/mock payments stay off unless `TINTA_ALLOW_MOCK_PAYMENTS=true` in a test environment.
+TINTA's launch pricing is deliberately free to maximize artist and customer acquisition.
 
-- Booking coordination fee: ₱199 by default (`TINTA_BOOKING_FEE`)
-- Platform commission: 15% of the artist deposit after a verified payment
-- Artist Spotlight: ₱499 / 7 days, ₱1499 / 30 days
-- Studio Pro: ₱999 / 30 days
+- Artist signup: FREE
+- Customer signup: FREE
+- Booking fee: ₱0
+- Platform commission: 15% on the completed paid booking amount used for the commission split
+- Advertising: paid ad inventory for businesses; artists are not charged to join
 
-`/api/pricing` publishes that menu. Artist signup is `POST /api/auth/register` with `role: "artist"`. Use a real mailbox domain. Fake domains like `example.com` are rejected on purpose.
+Payments are manual GCash verification. Card/Maya/mock checkout paths are disabled in production.
+
+`/api/pricing` publishes the free-launch pricing and revenue sources. Artist signup is `POST /api/auth/register` with `role: "artist"`.
 
 Backend still needs Mongo + Python, so the API stays on Render unless you connect another host with the same `MONGO_URL` and `JWT_SECRET`.
