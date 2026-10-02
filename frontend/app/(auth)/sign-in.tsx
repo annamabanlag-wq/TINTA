@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSession } from "../../src/session";
+import { API_URL } from "../../src/api";
 import { colors, spacing, IMAGES } from "../../src/theme";
 
 function isArtistHost() {
@@ -25,6 +26,16 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
+  // Wake the Render free-tier API while the artist enters credentials.
+  // This avoids the first sign-in request racing a sleeping backend.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/health`, { cache: "no-store" })
+      .catch(() => {})
+      .finally(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, []);
 
   const submit = async () => {
     setErr("");
