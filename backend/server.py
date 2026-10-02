@@ -65,7 +65,6 @@ def compute_split(amount_php: int) -> dict:
     }
 
 # Free-launch public pricing. Artist/customer accounts and booking coordination are free.
-@app.get("/api/pricing")
 async def public_pricing():
     return {
         "currency": "PHP",
@@ -85,6 +84,7 @@ APP_NAME = "inked-tattoo"
 storage_key: Optional[str] = None
 
 app = FastAPI()
+app.add_api_route("/api/pricing", public_pricing, methods=["GET"])
 
 @app.get("/api/health")
 @app.get("/health")
