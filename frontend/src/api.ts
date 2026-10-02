@@ -23,10 +23,10 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
   else headers.delete("Authorization");
 
   let res: Response;
-  // Never let a sleeping/unreachable backend leave the app on the splash screen forever.
-  // Abort requests after 12 seconds so session bootstrap and normal API calls fail cleanly.
+  // Render's free backend can cold-start after sleeping. Give it enough time to
+  // wake up instead of falsely reporting a server failure after 12 seconds.
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-  const timeout = controller ? setTimeout(() => controller.abort(), 12000) : null;
+  const timeout = controller ? setTimeout(() => controller.abort(), 45000) : null;
   try {
     res = await fetch(`${API_URL}${path}`, {
       ...requestOptions,
@@ -35,7 +35,7 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
     });
   } catch (error) {
     if ((error as any)?.name === "AbortError") {
-      throw new Error("TINTA server is taking too long to respond. Please try again.");
+      throw new Error("TINTA server is waking up. Please wait a few seconds and try again.");
     }
     throw new Error("Could not connect to TINTA. Please check your connection and try again.");
   } finally {
