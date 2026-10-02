@@ -1,6 +1,6 @@
 """Adds TINTA's zero-infrastructure booking monetization around the existing launch flow.
 
-New bookings carry a transparent platform coordination fee (default ₱199) while
+New bookings carry no TINTA booking fee while
 the artist deposit + any home-service fee remain the artist-facing amount used
 for the existing 15% commission split.
 
@@ -15,6 +15,7 @@ def install(module):
     router = getattr(module, "api_router", None)
     db = getattr(module, "db", None)
     app = getattr(module, "app", None)
+    # Free-launch policy: artists and customers are not charged account or booking fees.
     fee = 0
 
     if app is not None:
