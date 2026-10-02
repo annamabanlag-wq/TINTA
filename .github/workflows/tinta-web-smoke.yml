@@ -1,0 +1,91 @@
+name: TINTA Web Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend
+        working-directory: frontend
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+
+      - name: Build web bundle
+        working-directory: frontend
+        run: npx expo export --platform web
+
+      - name: Install Chromium
+        run: npx -y playwright@1.55.0 install --with-deps chromium
+
+      - name: Smoke test live TINTA
+        env:
+          CUSTOMER_URL: https://tinta-live.vercel.app
+          ARTIST_URL: https://tinta-artist-live.vercel.app
+          API_URL: https://tinta-backend.onrender.com
+        run: |
+          npx -y -p playwright@1.55.0 node <<'NODE'
+          const { chromium } = require("playwright");
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            async function checkPage(label, url, expectedText) {
+              const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+              if (!response || response.status() !== 200) {
+                throw new Error(label + " returned " + (response ? response.status() : "no response"));
+              }
+              await page.waitForTimeout(2500);
+              const text = await page.locator("body").innerText();
+              if (!text.includes("TINTA")) {
+                throw new Error(label + " did not render TINTA");
+              }
+              if (expectedText && !text.includes(expectedText)) {
+                throw new Error(label + " missing expected UI text: " + expectedText);
+              }
+              console.log(label + " OK (" + response.status() + ")");
+            }
+
+            await checkPage("Customer app", process.env.CUSTOMER_URL, null);
+            await checkPage("Artist portal", process.env.ARTIST_URL, null);
+
+            const api = await page.request.get(process.env.API_URL + "/api/health", { timeout: 60000 });
+            if (api.status() !== 200) {
+              throw new Error("Backend health returned " + api.status());
+            }
+            const health = await api.json();
+            if (!health.ok || health.product !== "TINTA") {
+              throw new Error("Unexpected backend health payload: " + JSON.stringify(health));
+            }
+            console.log("Backend health OK");
+
+            const pricing = await page.request.get(process.env.API_URL + "/api/pricing", { timeout: 60000 });
+            if (pricing.status() !== 200) {
+              throw new Error("Pricing endpoint returned " + pricing.status());
+            }
+            const menu = await pricing.json();
+            if (menu.booking_fee !== 199 || menu.commission_pct !== 15) {
+              throw new Error("Unexpected monetization config: " + JSON.stringify(menu));
+            }
+            console.log("Pricing/monetization OK");
+
+            await browser.close();
+          })().catch((err) => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
