@@ -1024,31 +1024,7 @@ class FeaturedOut(BaseModel):
 async def featured():
     now = datetime.now(timezone.utc)
 
-    # Paid Spotlight placements take priority over the free weekly rotation.
-    promoted = await db.artists.find(
-        {
-            "active": {"$ne": False},
-            "promotion_status": "active",
-            "promotion_until": {"$gt": now.isoformat()},
-        },
-        {"_id": 0},
-    ).sort("id", 1).to_list(200)
-
-    if promoted:
-        week_index = now.isocalendar().week
-        picked = promoted[week_index % len(promoted)]
-        promotion_until = str(picked.get("promotion_until"))
-        return {
-            "artist": picked,
-            "headline": "TINTA SPOTLIGHT",
-            "label": "TINTA SPOTLIGHT · SPONSORED",
-            "story": "Sponsored artist placement. Support this verified TINTA artist by booking directly through the platform.",
-            "deal_ends_at": promotion_until,
-            "discount_pct": 0,
-            "sponsored": True,
-        }
-
-    # Free editorial rotation when there is no active paid Spotlight.
+    # Free editorial rotation for every verified active artist. Paid Spotlight is disabled at launch.\n    # Free editorial rotation when there is no active paid Spotlight.
     week_index = now.isocalendar().week
     artists = await db.artists.find(
         {"active": {"$ne": False}},
