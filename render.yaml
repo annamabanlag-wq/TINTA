@@ -9,6 +9,6 @@ services:
       - key: TINTA_REQUIRE_EMAIL_VERIFICATION
         value: "false"
       - key: TINTA_BOOKING_FEE
-        value: "199"
+        value: "0"
       - key: PYTHONUNBUFFERED
         value: "1"
