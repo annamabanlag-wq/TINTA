@@ -1036,7 +1036,7 @@ async def featured():
     stories = [
         "This week's spotlight. Known for pushing the limits of ink and skin — book now before the calendar closes.",
         "Featured artist of the week. Booking a session unlocks a bonus custom sketch for your idea.",
-        "Hand-picked by our editors — a rare style, a bold voice. 15% off the deposit until Sunday.",
+        "Hand-picked by our editors — a rare style, a bold voice. Discover and book directly with the artist.",
     ]
     days_until_sunday = 6 - now.weekday()
     if days_until_sunday < 0:
@@ -1048,7 +1048,7 @@ async def featured():
         "label": "ARTIST OF THE WEEK",
         "story": stories[week_index % len(stories)],
         "deal_ends_at": end.isoformat(),
-        "discount_pct": 15,
+        "discount_pct": 0,
         "sponsored": False,
     }
 
