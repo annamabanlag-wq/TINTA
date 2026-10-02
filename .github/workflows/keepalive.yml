@@ -1,0 +1,30 @@
+name: Keep TINTA API warm
+
+on:
+  schedule:
+    # Render free web services sleep after ~15 minutes. This stays inside that window.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake tinta-backend
+        run: |
+          set -eu
+          code=$(curl -sS -o /tmp/health.json -w "%{http_code}" --max-time 90 \
+            https://tinta-backend.onrender.com/api/health || echo 000)
+          echo "health_status=$code"
+          cat /tmp/health.json || true
+          echo
+          # 200 is healthy. 503 is the free-tier wake page; a second hit usually succeeds.
+          if [ "$code" != "200" ]; then
+            sleep 20
+            curl -sS --max-time 90 https://tinta-backend.onrender.com/api/health || true
+            echo
+          fi

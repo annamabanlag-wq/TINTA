@@ -6,28 +6,45 @@ Repo: https://github.com/annamabanlag-wq/TINTA
 
 The old `TINTA-Emergent` GitHub URL redirects here.
 
-## Live
+## Live now (free hosting)
 
-| Layer | URL |
-| --- | --- |
-| Customer app | https://tinta-live.vercel.app |
-| Artist portal | https://tinta-artist-live.vercel.app |
-| Artist portal (Render) | https://tinta-artist.onrender.com |
-| API + web image | https://tinta-backend.onrender.com |
-| Health | https://tinta-backend.onrender.com/api/health |
+These are the stable public URLs. Use them.
 
-Artist signup: `POST /api/auth/register` with `role: "artist"` returns 200, an access token, `artist_portal: true`, and `artist_identity_verified: false`. Use a real mailbox domain. Fake domains like `example.com` are rejected on purpose.
+| Layer | URL | Status |
+| --- | --- | --- |
+| Customer app | https://tinta-live.vercel.app | Live on Vercel |
+| Artist portal | https://tinta-artist-live.vercel.app | Live on Vercel |
+| API | https://tinta-backend.onrender.com | Live on Render free tier |
+| Health | https://tinta-backend.onrender.com/api/health | `{"ok":true,"service":"tinta","product":"TINTA"}` |
+| Marketplace | https://tinta-backend.onrender.com/api/artists | Preview artists are loaded |
 
-Render free instances sleep. The first request can take about 30 seconds, then health returns `{"ok":true,"service":"tinta","product":"TINTA"}`.
+The Render free instance sleeps after about 15 minutes. The first request can take about 30 seconds, then health returns ok. A GitHub Actions keep-alive pings `/api/health` every 10 minutes so cold starts are rare. Free monthly hours are limited, so if Render suspends the service at the end of the month, open the Render dashboard and resume it.
 
-Payments: customer bookings use the manual GCash verification flow. Placeholder Stripe/mock payments are disabled by default; enable them only in a controlled test environment with `TINTA_ALLOW_MOCK_PAYMENTS=true`.
+Do not use https://tinta-artist.onrender.com as the artist entry point. The artist app that actually loads is the Vercel URL above.
 
-## GitHub Pages
+## GitHub Pages error
 
-Workflow base path is `/TINTA`. Pages is not on until you enable it once:
+`Deploy TINTA to GitHub Pages` builds, then fails with:
+
+`Failed to create deployment (status: 404) ... Ensure GitHub Pages has been enabled`
+
+That is a repo setting, not an app crash. Enable it once:
 
 Settings → Pages → Build and deployment → Source = GitHub Actions.
 
 After that, the site is https://annamabanlag-wq.github.io/TINTA/
+
+The customer and artist apps do not depend on Pages. They are already on Vercel.
+
+## How it makes money
+
+Payments are manual GCash verification. Placeholder Stripe/mock payments stay off unless `TINTA_ALLOW_MOCK_PAYMENTS=true` in a test environment.
+
+- Booking coordination fee: ₱199 by default (`TINTA_BOOKING_FEE`)
+- Platform commission: 15% of the artist deposit after a verified payment
+- Artist Spotlight: ₱499 / 7 days, ₱1499 / 30 days
+- Studio Pro: ₱999 / 30 days
+
+`/api/pricing` publishes that menu. Artist signup is `POST /api/auth/register` with `role: "artist"`. Use a real mailbox domain. Fake domains like `example.com` are rejected on purpose.
 
 Backend still needs Mongo + Python, so the API stays on Render unless you connect another host with the same `MONGO_URL` and `JWT_SECRET`.
