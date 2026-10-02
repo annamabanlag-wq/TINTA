@@ -15,7 +15,7 @@ def install(module):
     router = getattr(module, "api_router", None)
     db = getattr(module, "db", None)
     app = getattr(module, "app", None)
-    fee = max(0, int(os.environ.get("TINTA_BOOKING_FEE", "199")))
+    fee = 0
 
     if app is not None:
         async def public_pricing():
@@ -24,12 +24,9 @@ def install(module):
                 "booking_fee": fee,
                 "commission_pct": 15,
                 "payments": "GCash manual verification",
-                "packages": [
-                    {"id": "spotlight_7d", "name": "TINTA SPOTLIGHT · 7 DAYS", "price": 499, "days": 7},
-                    {"id": "spotlight_30d", "name": "TINTA SPOTLIGHT · 30 DAYS", "price": 1499, "days": 30},
-                    {"id": "studio_pro_30d", "name": "TINTA STUDIO PRO · 30 DAYS", "price": 999, "days": 30},
-                ],
-                "note": "Customers pay a booking fee plus the artist deposit. Artists keep the session rate minus the 15% platform commission after a verified GCash payment.",
+                "packages": [],
+                "revenue_sources": ["commission", "advertising"],
+                "note": "Artist and customer accounts are free. Customers pay only the artist deposit and any applicable home-service fee. TINTA earns the 15% platform commission on completed paid bookings and advertising revenue.",
             }
 
         already = any(getattr(route, "path", None) == "/api/pricing" for route in getattr(app, "routes", []))
@@ -163,10 +160,11 @@ def install(module):
             booking_fee_revenue = paid[0].get("booking_fee_revenue", 0) if paid else 0
             revenue = result.setdefault("revenue", {})
             booking_commission = revenue.get("booking_commission_earned", revenue.get("commission_earned", 0))
-            promotion_revenue = revenue.get("promotion_revenue", 0)
-            revenue["booking_fee_revenue"] = booking_fee_revenue
-            revenue["commission_earned"] = booking_commission + booking_fee_revenue + promotion_revenue
-            revenue["platform_revenue"] = revenue["commission_earned"]
+            # Free-launch model: no booking fees and no paid artist promotion revenue.
+            revenue["booking_fee_revenue"] = 0
+            revenue["promotion_revenue"] = 0
+            revenue["commission_earned"] = booking_commission
+            revenue["platform_revenue"] = booking_commission
             return result
         return wrapped
 
