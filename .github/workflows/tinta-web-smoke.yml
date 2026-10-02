@@ -78,8 +78,16 @@ jobs:
               throw new Error("Pricing endpoint returned " + pricing.status());
             }
             const menu = await pricing.json();
-            if (menu.booking_fee !== 199 || menu.commission_pct !== 15) {
-              throw new Error("Unexpected monetization config: " + JSON.stringify(menu));
+            if (
+              menu.booking_fee !== 0 ||
+              menu.commission_pct !== 15 ||
+              !Array.isArray(menu.packages) ||
+              menu.packages.length !== 0 ||
+              !Array.isArray(menu.revenue_sources) ||
+              !menu.revenue_sources.includes("commission") ||
+              !menu.revenue_sources.includes("advertising")
+            ) {
+              throw new Error("Unexpected free-launch monetization config: " + JSON.stringify(menu));
             }
             console.log("Pricing/monetization OK");
 
