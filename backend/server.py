@@ -64,6 +64,19 @@ def compute_split(amount_php: int) -> dict:
         "artist_net": amount_php - commission,
     }
 
+# Free-launch public pricing. Artist/customer accounts and booking coordination are free.
+@app.get("/api/pricing")
+async def public_pricing():
+    return {
+        "currency": "PHP",
+        "booking_fee": 0,
+        "commission_pct": COMMISSION_PERCENT,
+        "payments": "GCash manual verification",
+        "packages": [],
+        "revenue_sources": ["commission", "advertising"],
+        "note": "Artist and customer accounts are free. TINTA earns from the platform commission on paid bookings and from advertising.",
+    }
+
 # Emergent Object Storage
 STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
 STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
