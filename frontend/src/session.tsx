@@ -155,10 +155,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [token, clearSession, revokeServerSession]);
 
-  const doAuth = useCallback(async (path: string, body: any, persist = true): Promise<AuthOut> => {
+  const doAuth = useCallback(async (
+    path: string,
+    body: any,
+    persist = true,
+    expectedRole?: "customer" | "artist",
+  ): Promise<AuthOut> => {
     const r = await api<AuthOut>(path, { method: "POST", body: JSON.stringify(body) });
     if (!r.access_token) { await clearSession(); return r; }
-    const me = await api<User>("/auth/me", {}, r.access_token);
+
+    const meFromServer = await api<User>("/auth/me", {}, r.access_token);
+
+    // During artist registration the register endpoint is the authoritative
+    // role source. Keep the freshly-created artist session from being
+    // misclassified if an older /auth/me response omits the role flags.
+    const me: User = expectedRole === "artist"
+      ? { ...meFromServer, role: "artist", artist_portal: true }
+      : meFromServer;
+
     if (isArtistHost() && !isArtistUser(me)) {
       await clearSession();
       throw new Error("This account is a customer account. Please use the TINTA customer site, not the Artist Portal.");
@@ -173,10 +187,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [clearSession]);
 
   const signIn = useCallback(async (email: string, password: string) => { await doAuth("/auth/login", { email, password }); }, [doAuth]);
-  const signUp = useCallback(async (email: string, password: string, name: string, role: "customer" | "artist" = "customer") => {
-    const result = await doAuth("/auth/register", { email, password, name, role }, role === "artist");
+
+  const signUp = useCallback(async (
+    email: string,
+    password: string,
+    name: string,
+    role: "customer" | "artist" = "customer",
+  ) => {
+    const isArtist = role === "artist";
+    const result = await doAuth(
+      "/auth/register",
+      { email, password, name, role },
+      isArtist,
+      role,
+    );
     return Boolean(result.access_token);
   }, [doAuth]);
+
   const signOut = useCallback(async () => {
     const t = tokenRef.current;
     await revokeServerSession(t);
