@@ -6,6 +6,10 @@ Repo: https://github.com/annamabanlag-wq/TINTA
 
 The old `TINTA-Emergent` GitHub URL redirects here.
 
+### Public Android APK
+
+Download the latest published Android APK from the [TINTA GitHub Releases](https://github.com/annamabanlag-wq/TINTA/releases).
+
 ## Live now (free hosting)
 
 These are the stable public URLs. Use them.
