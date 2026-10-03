@@ -8,14 +8,6 @@ export default function Root({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="description" content="TINTA — discover Philippine tattoo artists, browse portfolios, and request bookings.">
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="TINTA — Find Your Next Ink" />
-        <meta property="og:description" content="Discover Philippine tattoo artists, browse original work, and request a session." />
-        <meta property="og:url" content="https://tinta-live.vercel.app" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="TINTA — Find Your Next Ink" />
-        <meta name="twitter:description" content="Discover Philippine tattoo artists, browse original work, and request a session." />
 
         <meta
           name="viewport"
