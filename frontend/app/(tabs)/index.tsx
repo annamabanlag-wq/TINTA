@@ -170,6 +170,15 @@ export default function Discover() {
           })}
         </ScrollView>
 
+        <Pressable testID="artist-growth-banner" onPress={() => router.push("/artist/promote")} style={styles.growthBanner}>
+          <View style={styles.growthIcon}><Icon name="edit-3" size={16} color={colors.onBrand} /></View>
+          <View style={styles.growthBody}>
+            <Text style={styles.growthTitle}>TATTOO ARTIST?</Text>
+            <Text style={styles.growthText}>JOIN TINTA FREE · SHOW YOUR WORK · GET BOOKINGS</Text>
+          </View>
+          <Icon name="arrow-right" size={17} color={colors.onBrand} />
+        </Pressable>
+
         <View style={styles.quickRow}>
           <Pressable testID="quick-favorites" onPress={() => router.push("/favorites")} style={styles.quickCard}>
             <View style={styles.quickIcon}><Icon name="heart" size={15} color={colors.brand} /></View>
@@ -319,6 +328,11 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.brand, borderColor: colors.brand },
   chipText: { color: colors.onSurfaceSecondary, fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
   chipTextActive: { color: colors.onBrand },
+  growthBanner: { flexDirection:"row", alignItems:"center", gap: spacing.sm, marginHorizontal: spacing.lg, marginTop: spacing.sm, padding: 14, backgroundColor: colors.brand, borderWidth: 2, borderColor: colors.brand },
+  growthIcon: { width: 30, height: 30, alignItems:"center", justifyContent:"center", borderWidth: 1, borderColor: colors.onBrand },
+  growthBody: { flex: 1 },
+  growthTitle: { color: colors.onBrand, fontSize: 12, fontWeight:"900", letterSpacing: 1.5 },
+  growthText: { color: colors.onBrand, fontSize: 9, fontWeight:"800", letterSpacing: 0.9, marginTop: 2 },
   quickRow: { flexDirection: "row", gap: spacing.sm },
   quickCard: { flex: 1, minHeight: 64, flexDirection: "row", alignItems: "center", gap: spacing.sm, padding: spacing.sm, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.surfaceSecondary },
   quickIcon: { width: 32, height: 32, borderWidth: 1, borderColor: colors.brand, alignItems: "center", justifyContent: "center" },
