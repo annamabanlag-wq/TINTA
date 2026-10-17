@@ -58,13 +58,13 @@ export default function AdminPaymentsScreen() {
       Alert.alert(
         approved ? "Payment Approved" : "Payment Rejected",
         approved
-          ? "The GCash payment has been approved."
-          : "The GCash payment has been rejected."
+          ? "The InstaPay QR payment has been approved after transfer verification."
+          : "The InstaPay QR payment has been rejected."
       );
 
       await load();
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Failed to review GCash payment");
+      Alert.alert("Error", e?.message ?? "Failed to review InstaPay QR payment");
     }
   };
 
@@ -88,7 +88,7 @@ export default function AdminPaymentsScreen() {
       ) : gcashRows.length > 0 ? (
         <View style={{ marginBottom: 16 }}>
           <Text style={{ fontSize: 18, fontWeight: "700", color: colors.onSurface, marginBottom: 10 }}>
-            GCash Payments for Verification
+            InstaPay QR Payments for Verification
           </Text>
 
           {gcashRows.map((item) => (
@@ -115,7 +115,7 @@ export default function AdminPaymentsScreen() {
               </Text>
 
               <Text style={{ color: colors.onSurface, marginTop: 4 }}>
-                GCash Reference: {item.gcash_reference_number ?? "Not provided"}
+                InstaPay Transaction Reference: {item.gcash_reference_number ?? "Not provided"}
               </Text>
 
               {item.gcash_receipt_url ? (
@@ -127,7 +127,7 @@ export default function AdminPaymentsScreen() {
                   }}
                 >
                   <Text style={{ color: colors.brand, marginTop: 4 }}>
-                    📷 View GCash Receipt
+                    📷 View Payment Receipt
                   </Text>
                 </TouchableOpacity>
               ) : null}
@@ -212,7 +212,7 @@ export default function AdminPaymentsScreen() {
         index={viewerIndex}
         visible={viewerVisible}
         onClose={() => setViewerVisible(false)}
-        caption="GCash Receipt"
+        caption="InstaPay Payment Receipt"
         token={token}
       />
     </View>
