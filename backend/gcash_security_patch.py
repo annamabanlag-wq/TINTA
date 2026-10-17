@@ -57,7 +57,7 @@ def install(server_module):
             return None
 
     async def secure_submit(body, user=__import__("fastapi").Depends(current_user)):
-        reference = (body.reference_number or "").strip()
+        reference = (body.reference_number or "").strip().upper()
         if len(reference) < 3:
             raise HTTPException(422, "GCash reference number is required")
 
@@ -71,11 +71,26 @@ def install(server_module):
         if booking.get("payment_status") == "paid":
             raise HTTPException(409, "Booking is already paid")
         if booking.get("gcash_review_status") == "pending":
-            raise HTTPException(409, "GCash payment is already pending verification")
+            # Make client retries safe when the server saved the submission but the
+            # response was lost. Only the same reference + receipt is idempotent.
+            incoming_receipt = (body.receipt_url or "").strip() or None
+            existing_reference = (booking.get("gcash_reference_number") or "").strip()
+            existing_receipt = (booking.get("gcash_receipt_url") or "").strip() or None
+            if existing_reference.upper() == reference.upper() and existing_receipt == incoming_receipt:
+                return {
+                    "submitted": True,
+                    "status": "pending_verification",
+                    "booking_id": booking["id"],
+                    "amount": int(booking.get("amount_submitted") or booking.get("deposit", 0) + booking.get("service_fee", 0)),
+                    "test_payment": bool(booking.get("is_test_payment")),
+                    "message": "Payment is already pending verification",
+                    "idempotent_retry": True,
+                }
+            raise HTTPException(409, "A payment reference is already pending for this booking")
 
         duplicate = await db.bookings.find_one(
             {
-                "gcash_reference_number": reference,
+                "gcash_reference_number": {"$regex": f"^{__import__('re').escape(reference)}$", "$options": "i"},
                 "id": {"$ne": booking["id"]},
                 "gcash_review_status": {"$in": ["pending", "approved"]},
             },

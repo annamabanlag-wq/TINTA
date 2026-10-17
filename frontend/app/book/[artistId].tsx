@@ -54,6 +54,9 @@ export default function BookScreen() {
   const [gcashReceiptUrl, setGcashReceiptUrl] = useState("");
   const [gcashReceiptUri, setGcashReceiptUri] = useState<string | null>(null);
   const [gcashReceiptFile, setGcashReceiptFile] = useState<any>(null);
+  // Keep a created booking ID across a payment-submit retry so a network error
+  // cannot create a second booking for the same customer and slot.
+  const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -117,62 +120,87 @@ export default function BookScreen() {
 
   const createBookingAndPay = async () => {
     if (!token) { setErr("Please sign in before booking."); return; }
-    if (!gcashReference.trim()) { setErr("Please enter your GCash reference number."); return; }
-    if (!gcashReceiptUri && !gcashReceiptUrl.trim()) { setErr("Please upload your GCash payment receipt."); return; }
-    setErr(""); setBusy(true);
+    if (!gcashReference.trim()) { setErr("Please enter your InstaPay transaction reference."); return; }
+    if (!gcashReceiptUri && !gcashReceiptUrl.trim()) { setErr("Please upload your payment receipt."); return; }
+    setErr("");
+    setBusy(true);
+    let retryBookingId = createdBookingId;
     try {
-      let refUrl: string | null = refUri;
-      if (refUrl && !refUrl.startsWith("http")) {
-        setUploading(true);
-        try {
-          const up = await uploadImage(refUrl, token, "reference.jpg", refFile ?? undefined);
-          refUrl = up.url;
-        } finally { setUploading(false); }
+      let bookingId = createdBookingId;
+
+      // Upload the tattoo reference and create the booking only once. If payment
+      // submission fails, the next attempt reuses the same booking instead of
+      // creating a duplicate appointment.
+      if (!bookingId) {
+        let refUrl: string | null = refUri;
+        if (refUrl && !refUrl.startsWith("http")) {
+          setUploading(true);
+          try {
+            const up = await uploadImage(refUrl, token, "reference.jpg", refFile ?? undefined);
+            refUrl = up.url;
+            setRefUri(up.url);
+            setRefFile(null);
+          } finally { setUploading(false); }
+        }
+
+        const booking: any = await api("/bookings", {
+          method: "POST",
+          body: JSON.stringify({
+            artist_id: artistId,
+            date,
+            time_slot: time,
+            description: desc,
+            estimated_hours: hours,
+            reference_image: refUrl,
+            home_service: homeService && !!artist?.home_service_available,
+            service_address: homeService ? serviceAddress.trim() : null,
+          }),
+        }, token);
+
+        bookingId = booking?.id;
+        if (!bookingId) {
+          throw new Error("The booking response did not include an ID. Check My Bookings before submitting again.");
+        }
+        retryBookingId = bookingId;
+        setCreatedBookingId(bookingId);
       }
 
       let receiptUrl = gcashReceiptUrl.trim() || null;
       if (gcashReceiptUri && !gcashReceiptUri.startsWith("http")) {
         setUploading(true);
         try {
-          const up = await uploadImage(gcashReceiptUri, token, "gcash-receipt.jpg", gcashReceiptFile ?? undefined);
+          const up = await uploadImage(gcashReceiptUri, token, "instapay-receipt.jpg", gcashReceiptFile ?? undefined);
           receiptUrl = up.url;
+          // Preserve the uploaded URL after a failed request so a retry does not
+          // upload the same receipt again.
+          setGcashReceiptUrl(up.url);
+          setGcashReceiptUri(null);
+          setGcashReceiptFile(null);
         } finally { setUploading(false); }
       }
-
-      const booking: any = await api("/bookings", {
-        method: "POST",
-        body: JSON.stringify({
-          artist_id: artistId,
-          date,
-          time_slot: time,
-          description: desc,
-          estimated_hours: hours,
-          reference_image: refUrl,
-          home_service: homeService && !!artist?.home_service_available,
-          service_address: homeService ? serviceAddress.trim() : null,
-        }),
-      }, token);
 
       await api("/payments/gcash/submit", {
         method: "POST",
         body: JSON.stringify({
-          booking_id: booking.id,
+          booking_id: bookingId,
           reference_number: gcashReference.trim(),
           receipt_url: receiptUrl,
         }),
       }, token);
 
-      // Clear payment/upload state immediately after the submission succeeds.
-      // This prevents the previous receipt and reference from appearing on a new booking form.
       setGcashReference("");
       clearGcashReceipt();
       setRefUri(null);
       setRefFile(null);
+      setCreatedBookingId(null);
       setPaid(false);
       setDone(true);
-      Alert.alert("GCash Payment Submitted", "Your payment is now pending verification. We will confirm it after the admin reviews your GCash payment.");
+      Alert.alert("InstaPay Payment Submitted", "Your transaction reference and receipt are pending admin verification. TINTA will mark the payment confirmed only after the admin verifies the transfer.");
     } catch (e: any) {
-      setErr(e?.message ?? "Booking failed");
+      const detail = e?.message ?? "Please check your connection and try again.";
+      setErr(retryBookingId
+        ? "Your booking is saved, but payment submission did not finish. Retry this payment to reuse the same booking. " + detail
+        : detail);
     } finally { setBusy(false); }
   };
 
@@ -251,10 +279,10 @@ export default function BookScreen() {
         </>}
 
         {step === 3 && <>
-          <View style={styles.summary}><Text style={styles.blockTitle}>BOOKING SUMMARY</Text><SummaryRow k="ARTIST" v={artist.name} /><SummaryRow k="DATE" v={date} /><SummaryRow k="TIME" v={time} /><SummaryRow k="HOURS" v={`${hours}H`} /><SummaryRow k="RATE" v={`${fmtPHP(artist.rate_per_hour)}/HR`} />{serviceFee > 0 && <SummaryRow k="HOME SERVICE" v={`+${fmtPHP(serviceFee)}`} />}<View style={styles.divider} /><SummaryRow k="ESTIMATED TOTAL" v={fmtPHP(total)} big /><SummaryRow k="ARTIST DEPOSIT" v={fmtPHP(DEPOSIT)} /><SummaryRow k="GCASH TOTAL DUE" v={fmtPHP(paymentDue)} accent /></View>
-          <View style={styles.summary}><Text style={styles.blockTitle}>GCASH PAYMENT</Text><Text style={styles.paymentTitle}>SEND {fmtPHP(paymentDue)} TOTAL TO</Text><Image source={require("../../assets/GCash-MyQR-12092026210418.PNG.jpg")} style={styles.qr} contentFit="contain" /><Text style={styles.merchant}>TINTA</Text><Text style={styles.phone}>GCash: 09381447214</Text><Text style={styles.payInstruction}>Send the total shown above. This includes the ₱2,900 artist deposit and any applicable home-service fee. TINTA does not charge a booking fee. Your payment remains pending until an admin verifies it.</Text><TextInput testID="gcash-reference-input" value={gcashReference} onChangeText={setGcashReference} placeholder="GCash Reference Number *" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="characters" />
-            {gcashReceiptUri ? <View style={styles.receiptSelected}><View style={styles.refWrap}><Image source={gcashReceiptUri} style={StyleSheet.absoluteFill} contentFit="cover" /><Pressable testID="remove-gcash-receipt" onPress={clearGcashReceipt} style={styles.refRemove}><Icon name="x" size={16} color={colors.onSurface} /></Pressable></View><Text style={styles.receiptSelectedText}>GCASH RECEIPT SELECTED</Text><Text style={styles.receiptHint}>This exact image will be submitted. Choose another image to replace it.</Text><Pressable testID="change-gcash-receipt" onPress={() => pickImage("receipt")} style={styles.changeReceiptBtn}><Icon name="refresh-cw" size={16} color={colors.onBrand} /><Text style={styles.changeReceiptText}>CHANGE RECEIPT</Text></Pressable></View> : <Pressable testID="pick-gcash-receipt" onPress={() => pickImage("receipt")} style={styles.pickBtn}><Icon name="camera" size={24} color={colors.brand} /><Text style={styles.pickText}>SELECT GCASH RECEIPT *</Text></Pressable>}
-            <TextInput testID="gcash-receipt-input" value={gcashReceiptUrl} onChangeText={setGcashReceiptUrl} placeholder="Receipt URL (optional if uploaded)" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="none" />
+          <View style={styles.summary}><Text style={styles.blockTitle}>BOOKING SUMMARY</Text><SummaryRow k="ARTIST" v={artist.name} /><SummaryRow k="DATE" v={date} /><SummaryRow k="TIME" v={time} /><SummaryRow k="HOURS" v={`${hours}H`} /><SummaryRow k="RATE" v={`${fmtPHP(artist.rate_per_hour)}/HR`} />{serviceFee > 0 && <SummaryRow k="HOME SERVICE" v={`+${fmtPHP(serviceFee)}`} />}<View style={styles.divider} /><SummaryRow k="ESTIMATED TOTAL" v={fmtPHP(total)} big /><SummaryRow k="ARTIST DEPOSIT" v={fmtPHP(DEPOSIT)} /><SummaryRow k="INSTAPAY TOTAL DUE" v={fmtPHP(paymentDue)} accent /></View>
+          <View style={styles.summary}><Text style={styles.blockTitle}>INSTAPAY QR PAYMENT</Text><Text style={styles.paymentTitle}>SCAN THE QR • SEND {fmtPHP(paymentDue)}</Text><Image source={require("../../assets/instapay-qr.png")} style={styles.qr} contentFit="contain" /><Text style={styles.merchant}>TINTA</Text><Text style={styles.phone}>GCash: 09381447214</Text><Text style={styles.payInstruction}>Scan the InstaPay QR using a supported Philippine bank or e-wallet. Before confirming the transfer, verify the recipient shown by your payment app is annamabanlag. Send the exact total shown above (₱2,900 deposit plus any home-service fee). Save your receipt and enter its transaction reference below. Payment remains pending until an admin verifies the successful transfer.</Text><TextInput testID="gcash-reference-input" value={gcashReference} onChangeText={setGcashReference} placeholder="InstaPay Transaction Reference *" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="characters" />
+            {gcashReceiptUri ? <View style={styles.receiptSelected}><View style={styles.refWrap}><Image source={gcashReceiptUri} style={StyleSheet.absoluteFill} contentFit="cover" /><Pressable testID="remove-instapay-receipt" onPress={clearGcashReceipt} style={styles.refRemove}><Icon name="x" size={16} color={colors.onSurface} /></Pressable></View><Text style={styles.receiptSelectedText}>INSTAPAY RECEIPT SELECTED</Text><Text style={styles.receiptHint}>This exact image will be submitted. Choose another image to replace it.</Text><Pressable testID="change-instapay-receipt" onPress={() => pickImage("receipt")} style={styles.changeReceiptBtn}><Icon name="refresh-cw" size={16} color={colors.onBrand} /><Text style={styles.changeReceiptText}>CHANGE RECEIPT</Text></Pressable></View> : <Pressable testID="pick-instapay-receipt" onPress={() => pickImage("receipt")} style={styles.pickBtn}><Icon name="camera" size={24} color={colors.brand} /><Text style={styles.pickText}>SELECT PAYMENT RECEIPT *</Text></Pressable>}
+            <TextInput testID="instapay-receipt-input" value={gcashReceiptUrl} onChangeText={setGcashReceiptUrl} placeholder="Receipt URL (optional if uploaded)" placeholderTextColor={colors.muted} style={styles.input} autoCapitalize="none" />
           </View>
           {!!err && <Text style={styles.err}>{err.toUpperCase()}</Text>}
         </>}

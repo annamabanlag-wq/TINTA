@@ -307,3 +307,11 @@ agent_communication:
       2. Frontend: admin tab only appears for admin, all 6 sub-screens navigable, create-payout end-to-end.
       3. Regression: customer sign-up + booking + mock payment still works, admin refund works.
       Credentials in /app/memory/test_credentials.md.
+
+
+## 2026-10-17 stability and InstaPay QR follow-up
+- Added the supplied InstaPay QR as a dedicated frontend asset. Its EMV payload was decoded locally and verified to include recipient name `annamabanlag`; no payment was initiated.
+- Updated booking checkout copy to say InstaPay QR, show the recipient name, and require a transaction reference plus receipt.
+- Added frontend retry handling so a saved booking is reused after a failed payment submission rather than creating another booking.
+- Hardened the manual payment endpoint for safe retries: the same reference and receipt can return the existing pending status; a different pending reference is rejected. Duplicate reference matching is case-insensitive.
+- Required verification after deployment: run backend payment tests, inspect production health endpoint and logs, and test a controlled booking with no real transfer. Never mark a real payment paid without verifying the actual transfer.
