@@ -27,14 +27,6 @@ export default function PromoteArtist() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.section}>HOW TINTA EARNS</Text>
-        <Text style={styles.headline}>15% PLATFORM COMMISSION</Text>
-        <Text style={styles.text}>TINTA earns a commission from completed paid bookings while artists keep the remainder of the commissionable booking amount.</Text>
-        <Text style={styles.headline}>ADVERTISING</Text>
-        <Text style={styles.text}>TINTA can also earn from paid advertising inventory shown to customers. Artist accounts are not charged for joining or normal visibility.</Text>
-      </View>
-
-      <View style={styles.card}>
         <Text style={styles.section}>LAUNCH PROMISE</Text>
         <Text style={styles.text}>Bring your best work, complete verification, stay active, and focus on getting bookings. TINTA is removing artist promotion fees to grow the marketplace first.</Text>
       </View>
