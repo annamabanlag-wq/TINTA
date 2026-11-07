@@ -7,5 +7,6 @@
       "source": "/api/:path*",
       "destination": "https://tinta-backend.onrender.com/api/:path*"
     }
-  ]
+  ],
+  "cleanUrls": true
 }
