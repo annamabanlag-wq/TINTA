@@ -8,8 +8,8 @@ on:
         required: false
         type: string
         default: "https://tinta-backend.onrender.com"
-  pull_request:
   push:
+    branches: [main]
     paths:
       - 'frontend/**'
       - 'android/**'
