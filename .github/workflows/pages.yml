@@ -1,8 +1,6 @@
-name: Deploy TINTA to GitHub Pages
+name: Manual legacy GitHub Pages deployment (disabled by default)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
