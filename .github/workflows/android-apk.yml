@@ -2,6 +2,12 @@ name: TINTA Native Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      backend_url:
+        description: "Backend API origin (for DockHosting, use the generated HTTPS app URL without /api)"
+        required: false
+        type: string
+        default: "https://tinta-backend.onrender.com"
   pull_request:
   push:
     paths:
@@ -10,6 +16,7 @@ on:
       - '.github/workflows/android-apk.yml'
 
 env:
+  EXPO_PUBLIC_BACKEND_URL: ${{ github.event.inputs.backend_url || vars.TINTA_BACKEND_URL || 'https://tinta-backend.onrender.com' }}
   ORG_GRADLE_PROJECT_reactNativeArchitectures: armeabi-v7a,arm64-v8a,x86,x86_64
 
 jobs:

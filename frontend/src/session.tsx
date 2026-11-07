@@ -60,8 +60,19 @@ type Ctx = {
 const SessionContext = createContext<Ctx | null>(null);
 
 function isArtistHost() {
-  if (typeof window !== "undefined") return window.location.hostname.toLowerCase().includes("tinta-artist");
-  return false;
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname.toLowerCase();
+  const path = window.location.pathname.toLowerCase();
+  const params = new URLSearchParams(window.location.search);
+  const artistSubroute = path.split("/").filter(Boolean)[1] ?? "";
+  // /artist/:id is a public artist profile used by customers. Only mark the
+  // dedicated artist application/portal routes as artist-only on one origin.
+  const artistPortalRoute = path === "/artist"
+    || ["apply", "portal", "messages", "promote", "section"].includes(artistSubroute);
+  return host.includes("tinta-artist")
+    || artistPortalRoute
+    || params.get("next") === "artist"
+    || params.get("role") === "artist";
 }
 
 function isArtistUser(user: User | null) {
