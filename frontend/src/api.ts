@@ -1,10 +1,10 @@
-// TINTA production deployment trigger.
-// Keep this file deploy-triggerable from main.
-// Production CI is the source of truth for the customer web deploy.
-// Use the live TINTA backend directly so the Vercel artist portal does not
-// depend on a deployment-specific /api rewrite. The backend CORS policy already
-// allows the TINTA Vercel domains.
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL ?? "https://tinta-backend.onrender.com";
+import { Platform } from "react-native";
+
+// A single-origin Docker deployment must call its own API. On Vercel, the
+// existing /api rewrite continues to forward requests to the Render backend.
+// Native APKs keep the current Render fallback unless a build-time URL is set.
+const configuredBackend = (process.env.EXPO_PUBLIC_BACKEND_URL ?? "").trim().replace(/\/+$/, "");
+const BASE = configuredBackend || (Platform.OS === "web" ? "" : "https://tinta-backend.onrender.com");
 export const API_URL = `${BASE}/api`;
 
 export async function api<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
