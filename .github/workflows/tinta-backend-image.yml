@@ -1,7 +1,12 @@
-name: Build and publish TINTA backend
+name: Validate TINTA backend source
 
 on:
   push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/tinta-backend-image.yml"
+  pull_request:
     branches: [main]
     paths:
       - "backend/**"
@@ -10,33 +15,17 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  backend-image:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
-
-      - name: Validate Python backend
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile backend modules
         run: python -m compileall -q backend
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: \${{ github.actor }}
-          password: \${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/annamabanlag-wq/tinta-backend:render
-            ghcr.io/annamabanlag-wq/tinta-backend:\${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
